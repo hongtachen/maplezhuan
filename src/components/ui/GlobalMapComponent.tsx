@@ -198,7 +198,7 @@ export default function GlobalMapComponent({
                       <div className="relative w-full h-[110px] mb-2 rounded-lg overflow-hidden bg-gray-100">
                         <Image
                           src={sublet.images[0]}
-                          alt={sublet.title}
+                          alt={sublet.title ?? ""}
                           fill
                           className="object-cover"
                           unoptimized
