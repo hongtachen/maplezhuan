@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -9,6 +9,7 @@ import {
   useMapEvents,
   useMap,
 } from "react-leaflet";
+import { useEffect } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -65,20 +66,16 @@ interface NominatimResult {
 }
 
 function MapClickHandler({
-  setPosition,
-  fetchAddress,
+  onMapClick,
   readOnly,
 }: {
-  setPosition: (pos: { lat: number; lng: number }) => void;
-  fetchAddress: (lat: number, lng: number) => void;
+  onMapClick: (lat: number, lng: number) => void;
   readOnly?: boolean;
 }) {
   useMapEvents({
     click(e) {
       if (readOnly) return;
-      const { lat, lng } = e.latlng;
-      setPosition({ lat, lng });
-      fetchAddress(lat, lng);
+      onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
   return null;
@@ -90,60 +87,43 @@ export default function MapComponent({
   readOnly,
   className,
 }: MapComponentProps) {
-  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(
-    value ? { lat: value.lat, lng: value.lng } : null,
-  );
-  const [addressText, setAddressText] = useState(
-    value?.text || "点击地图选择位置...",
-  );
-  const [cityValue, setCityValue] = useState(value?.city || "");
-  const [showExactLocation, setShowExactLocation] = useState(
-    value?.showExactLocation ?? true,
-  );
+  // Fully controlled: all position/address state lives in the parent via `value`.
+  // Local state is only for UI-only concerns: loading indicator and search.
   const [isLoading, setIsLoading] = useState(false);
-
-  // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync external value changes
-  const prevValueRef = useRef(value);
-  useEffect(() => {
-    const prev = prevValueRef.current;
-    prevValueRef.current = value;
-    if (!value) return;
-    // Only call setPosition when lat/lng actually changed to avoid cascading renders
-    if (value.lat !== prev?.lat || value.lng !== prev?.lng) {
-      setPosition({ lat: value.lat, lng: value.lng });
-    }
-    setAddressText(value.text);
-    setCityValue(value.city || "");
-    setShowExactLocation(value.showExactLocation);
-  }, [value]);
+  // Derive display values directly from the controlled `value` prop.
+  const position = value ? { lat: value.lat, lng: value.lng } : null;
+  const addressText = value?.text ?? "点击地图选择位置...";
+  const cityValue = value?.city ?? "";
+  const showExactLocation = value?.showExactLocation ?? true;
 
   const handleUpdate = (
     lat: number,
     lng: number,
     text: string,
     exact: boolean,
-    c: string = cityValue,
+    city: string = cityValue,
   ) => {
-    if (onChange) {
-      onChange({ lat, lng, text, showExactLocation: exact, city: c });
-    }
+    onChange?.({ lat, lng, text, showExactLocation: exact, city });
   };
 
   const fetchAddress = async (lat: number, lng: number) => {
     setIsLoading(true);
-    setAddressText("正在获取地址信息...");
+    onChange?.({
+      lat,
+      lng,
+      text: "正在获取地址信息...",
+      showExactLocation,
+      city: cityValue,
+    });
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-        {
-          headers: { "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8" },
-        },
+        { headers: { "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8" } },
       );
       const data = await res.json();
 
@@ -155,16 +135,22 @@ export default function MapComponent({
         const parts = [road, suburb, newCity, state].filter(Boolean);
         if (parts.length > 0) newText = parts.join(", ");
       }
-
-      setAddressText(newText);
-      setCityValue(newCity);
       handleUpdate(lat, lng, newText, showExactLocation, newCity);
     } catch {
-      setAddressText("无法获取地址详情，请重试");
-      handleUpdate(lat, lng, "未知地址", showExactLocation, cityValue);
+      handleUpdate(
+        lat,
+        lng,
+        "无法获取地址详情，请重试",
+        showExactLocation,
+        cityValue,
+      );
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleMapClick = (lat: number, lng: number) => {
+    fetchAddress(lat, lng);
   };
 
   const handleSearch = (query: string) => {
@@ -180,9 +166,7 @@ export default function MapComponent({
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
-          {
-            headers: { "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8" },
-          },
+          { headers: { "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8" } },
         );
         const data = await res.json();
         setSearchResults(data);
@@ -197,17 +181,12 @@ export default function MapComponent({
   const handleSelectSearchResult = (result: NominatimResult) => {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
-
     const newCity =
       result.address?.city ||
       result.address?.town ||
       result.address?.village ||
       "";
-    const text = result.display_name.split(",").slice(0, 3).join(","); // Simplify
-
-    setPosition({ lat, lng });
-    setAddressText(text);
-    setCityValue(newCity);
+    const text = result.display_name.split(",").slice(0, 3).join(",");
     setSearchQuery("");
     setSearchResults([]);
     handleUpdate(lat, lng, text, showExactLocation, newCity);
@@ -261,7 +240,7 @@ export default function MapComponent({
         <MapContainer
           center={position ? [position.lat, position.lng] : DEFAULT_CENTER}
           zoom={13}
-          scrollWheelZoom={true} // Enabled scroll wheel zoom globally as requested
+          scrollWheelZoom={true}
           style={{ height: "100%", width: "100%", zIndex: 0 }}
         >
           <TileLayer
@@ -290,8 +269,7 @@ export default function MapComponent({
           )}
 
           <MapClickHandler
-            setPosition={setPosition}
-            fetchAddress={fetchAddress}
+            onMapClick={handleMapClick}
             readOnly={readOnly || !onChange}
           />
           {position && <MapUpdater center={[position.lat, position.lng]} />}
@@ -346,7 +324,6 @@ export default function MapComponent({
                 checked={showExactLocation}
                 onChange={(e) => {
                   const val = e.target.checked;
-                  setShowExactLocation(val);
                   if (position)
                     handleUpdate(position.lat, position.lng, addressText, val);
                 }}
