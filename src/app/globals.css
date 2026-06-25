@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand design tokens */
+  --color-text: #1f2933;
+  --color-background: #f3fbf7;
+  --color-primary: #2f9e6d;
+  --color-secondary: #1f7a55;
+  --color-accent: #d94a38;
+  --color-muted: #5a6b73;
+  --color-bg-alt: rgba(227, 241, 234, 0.4);
+  --color-bg-tint: #e3f1ea;
+  --color-green-light: #64b16a;
+  --color-border: rgba(31, 41, 51, 0.05);
+  --color-border-md: rgba(31, 41, 51, 0.1);
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-text);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-muted: var(--color-muted);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+
+  /* Fluid Typography */
+  --text-fluid-h1-mobile: clamp(1.5rem, 60vw, 3.5rem);
+  --text-fluid-h1: clamp(1.5rem, 5.5vw, 4.5rem);
+  --text-fluid-h2-mobile: clamp(1rem, 6vw, 6rem);
+  --text-fluid-h2: clamp(1.5rem, 3.5vw, 2.1rem);
+  --text-fluid-h3: clamp(1.25rem, 3vw, 1.75rem);
+  --text-fluid-h4-mobile: clamp(0.5rem, 2vw, 1.5rem);
+  --text-fluid-h4: clamp(1.125rem, 2vw, 1.5rem);
+  --text-fluid-p-mobile: clamp(1rem, 4vw, 3rem);
+  --text-fluid-p: clamp(1rem, 1.6vw, 2rem);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide number input spin buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+}
