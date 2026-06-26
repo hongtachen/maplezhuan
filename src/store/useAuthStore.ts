@@ -51,6 +51,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
   loginWithGoogle: async () => {
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: "select_account",
+      });
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
