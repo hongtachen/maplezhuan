@@ -42,8 +42,8 @@ export default function ListingDetailPage() {
 
   // Prevent hydration mismatch for favorite button
   useEffect(() => {
-    setMounted(true);
     const fetchItem = async () => {
+      setMounted(true);
       try {
         const docRef = doc(db, "items", id);
         const snap = await getDoc(docRef);
@@ -82,7 +82,7 @@ export default function ListingDetailPage() {
       }
     };
     fetchItem();
-  }, [id]);
+  }, [id, user]);
 
   const handleAction = async (
     action: "contact" | "request_buy" | "request_reserve",

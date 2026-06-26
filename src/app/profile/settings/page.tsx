@@ -31,15 +31,17 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (userProfile) {
-      if (userProfile.nickname) setNickname(userProfile.nickname);
-      if (userProfile.wechat) setWechat(userProfile.wechat);
-      if (userProfile.phone) setPhone(userProfile.phone);
-      if (userProfile.isPublicContact !== undefined)
-        setIsPublic(userProfile.isPublicContact);
-      if (userProfile.emailNotifications !== undefined)
-        setEmailNotifications(userProfile.emailNotifications);
-      if (userProfile.defaultAddress)
-        setAddressData(userProfile.defaultAddress);
+      setTimeout(() => {
+        if (userProfile.nickname) setNickname(userProfile.nickname);
+        if (userProfile.wechat) setWechat(userProfile.wechat);
+        if (userProfile.phone) setPhone(userProfile.phone);
+        if (userProfile.isPublicContact !== undefined)
+          setIsPublic(userProfile.isPublicContact);
+        if (userProfile.emailNotifications !== undefined)
+          setEmailNotifications(userProfile.emailNotifications);
+        if (userProfile.defaultAddress)
+          setAddressData(userProfile.defaultAddress);
+      }, 0);
     }
   }, [userProfile]);
 

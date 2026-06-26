@@ -103,13 +103,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })();
     } else {
       // User logged out — load from localStorage (guest mode)
-      setFavoriteIds(new Set());
-      try {
-        const raw = localStorage.getItem(LS_KEY);
-        if (raw) setFavoriteIds(new Set(JSON.parse(raw) as string[]));
-      } catch {
-        /* ignore */
-      }
+      setTimeout(() => {
+        setFavoriteIds(new Set());
+        try {
+          const raw = localStorage.getItem(LS_KEY);
+          if (raw) setFavoriteIds(new Set(JSON.parse(raw) as string[]));
+        } catch {
+          /* ignore */
+        }
+      }, 0);
     }
   }, [user]);
 

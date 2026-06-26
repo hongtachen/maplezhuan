@@ -77,11 +77,11 @@ export function useUser(userId: string) {
 
   useEffect(() => {
     if (!userId) {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
       return;
     }
 
-    setLoading(true);
+    setTimeout(() => setLoading(true), 0);
     let profileReady = false;
     let reviewsReady = false;
     let listingsReady = false;

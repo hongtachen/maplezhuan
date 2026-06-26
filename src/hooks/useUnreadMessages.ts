@@ -10,7 +10,7 @@ export function useUnreadMessages() {
 
   useEffect(() => {
     if (!user) {
-      setUnreadCount(0);
+      setTimeout(() => setUnreadCount(0), 0);
       return;
     }
 

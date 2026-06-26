@@ -96,12 +96,15 @@ export default function GlobalMapComponent({
 
   useEffect(() => {
     const ids = items.map((i) => i.id ?? "");
-    setItemJitter((prev) => addJitterForNewIds(ids, prev));
+    setTimeout(() => setItemJitter((prev) => addJitterForNewIds(ids, prev)), 0);
   }, [items]);
 
   useEffect(() => {
     const ids = sublets.map((s) => s.id ?? "");
-    setSubletJitter((prev) => addJitterForNewIds(ids, prev));
+    setTimeout(
+      () => setSubletJitter((prev) => addJitterForNewIds(ids, prev)),
+      0,
+    );
   }, [sublets]);
 
   return (

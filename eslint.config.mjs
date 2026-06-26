@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
       // are intentional and valid — downgrade from error to warn.
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
+      // Disable next/image requirement because external image sources are dynamic
+      "@next/next/no-img-element": "off",
       // Allow _ prefix for intentionally unused destructured variables.
       "@typescript-eslint/no-unused-vars": [
         "warn",

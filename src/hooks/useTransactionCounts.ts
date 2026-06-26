@@ -28,14 +28,16 @@ export function useTransactionCounts(): TransactionCounts {
 
   useEffect(() => {
     if (!user) {
-      setCounts({
-        listings: 0,
-        listingsActive: 0,
-        sold: 0,
-        bought: 0,
-        pendingReviews: 0,
-      });
-      setLoading(false);
+      setTimeout(() => {
+        setCounts({
+          listings: 0,
+          listingsActive: 0,
+          sold: 0,
+          bought: 0,
+          pendingReviews: 0,
+        });
+        setLoading(false);
+      }, 0);
       return;
     }
 

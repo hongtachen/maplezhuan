@@ -108,8 +108,10 @@ export default function BrowsePage() {
   // Reset city filter when selected city no longer has listings in that tab
   useEffect(() => {
     if (itemLocation !== "全部城市" && !itemCities.includes(itemLocation)) {
-      setItemLocation("全部城市");
-      setAppliedFilters((prev) => ({ ...prev, itemLocation: "全部城市" }));
+      setTimeout(() => {
+        setItemLocation("全部城市");
+        setAppliedFilters((prev) => ({ ...prev, itemLocation: "全部城市" }));
+      }, 0);
     }
   }, [itemCities, itemLocation]);
 
@@ -118,8 +120,10 @@ export default function BrowsePage() {
       subletLocation !== "全部城市" &&
       !subletCities.includes(subletLocation)
     ) {
-      setSubletLocation("全部城市");
-      setAppliedFilters((prev) => ({ ...prev, subletLocation: "全部城市" }));
+      setTimeout(() => {
+        setSubletLocation("全部城市");
+        setAppliedFilters((prev) => ({ ...prev, subletLocation: "全部城市" }));
+      }, 0);
     }
   }, [subletCities, subletLocation]);
 

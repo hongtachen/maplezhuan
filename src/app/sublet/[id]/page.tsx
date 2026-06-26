@@ -42,8 +42,8 @@ export default function SubletDetailPage() {
 
   // Prevent hydration mismatch for favorite button
   useEffect(() => {
-    setMounted(true);
     const fetchSublet = async () => {
+      setMounted(true);
       try {
         const docRef = doc(db, "sublets", id);
         const snap = await getDoc(docRef);
@@ -76,7 +76,7 @@ export default function SubletDetailPage() {
       }
     };
     fetchSublet();
-  }, [id]);
+  }, [id, user]);
 
   const handleAction = async (action: "contact" | "request_reserve") => {
     if (!user) {

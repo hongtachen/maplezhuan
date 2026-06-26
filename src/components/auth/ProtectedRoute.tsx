@@ -13,7 +13,10 @@ export default function ProtectedRoute({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const init = async () => {
+      setMounted(true);
+    };
+    init();
   }, []);
 
   if (!mounted || isLoading) {

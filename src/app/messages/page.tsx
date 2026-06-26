@@ -32,8 +32,10 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!user) {
-      setChats([]);
-      setLoading(false);
+      setTimeout(() => {
+        setChats([]);
+        setLoading(false);
+      }, 0);
       return;
     }
 

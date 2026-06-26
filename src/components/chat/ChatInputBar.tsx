@@ -33,7 +33,7 @@ export default function ChatInputBar({
   // Close pickup sheet if transaction status no longer allows scheduling
   useEffect(() => {
     if (!canSchedulePickup && pickupOpen) {
-      setPickupOpen(false);
+      setTimeout(() => setPickupOpen(false), 0);
     }
   }, [canSchedulePickup, pickupOpen]);
 

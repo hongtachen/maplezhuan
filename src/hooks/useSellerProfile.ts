@@ -10,12 +10,14 @@ export function useSellerProfile(sellerId: string | null | undefined) {
 
   useEffect(() => {
     if (!sellerId) {
-      setProfile(null);
-      setLoading(false);
+      setTimeout(() => {
+        setProfile(null);
+        setLoading(false);
+      }, 0);
       return;
     }
 
-    setLoading(true);
+    setTimeout(() => setLoading(true), 0);
     const unsub = onSnapshot(
       doc(db, "users", sellerId),
       (snap) => {
