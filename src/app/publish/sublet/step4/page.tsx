@@ -245,7 +245,7 @@ export default function SubletStep4Page() {
                     onChange={(e) =>
                       setSubletData({ contactPhone: e.target.value })
                     }
-                    placeholder="手机号码（推荐）"
+                    placeholder="手机号码"
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d] outline-none transition-all text-sm"
                   />
                 </div>

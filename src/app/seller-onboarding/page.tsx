@@ -180,7 +180,7 @@ export default function SellerOnboardingPage() {
                     type="text"
                     value={wechat}
                     onChange={(e) => setWechat(e.target.value)}
-                    placeholder="微信号 (推荐)"
+                    placeholder="微信号"
                     className="w-full bg-[#f7f9fc] border border-transparent rounded-[16px] pl-11 pr-4 py-3.5 text-[15px] outline-none focus:bg-white focus:border-[#2f9e6d] transition-all"
                   />
                 </div>
