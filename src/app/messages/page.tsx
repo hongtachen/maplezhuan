@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { ChatListSkeleton } from "@/components/motion/Skeleton";
 import {
@@ -123,8 +124,10 @@ export default function MessagesPage() {
         </div>
       </header>
 
-      {/* Message List */}
-      <div className="flex-1 max-w-[800px] w-full mx-auto">
+      {/* Message List — extra bottom padding in manage mode for the fixed action bar */}
+      <div
+        className={`flex-1 max-w-[800px] w-full mx-auto ${isManageMode ? "pb-28 md:pb-24" : ""}`}
+      >
         {loading ? (
           <ChatListSkeleton />
         ) : (
@@ -259,10 +262,13 @@ export default function MessagesPage() {
             <p className="text-[#5a6b73] text-sm">暂无新消息</p>
           </div>
         )}
+      </div>
 
-        {/* Manage Footer */}
-        {isManageMode && (
-          <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 left-0 md:left-16 right-0 bg-white border-t border-[rgba(31,41,51,0.08)] z-50 p-4 flex items-center justify-between gap-3 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
+      {/* Manage footer — portal to body so fixed positioning isn't trapped by RouteTransition transforms */}
+      {isManageMode &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 md:left-16 right-0 bg-white border-t border-[rgba(31,41,51,0.08)] z-[100] p-4 flex items-center justify-between gap-3 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
             <button
               onClick={() => {
                 if (selectedChats.size === chats.length) {
@@ -301,9 +307,9 @@ export default function MessagesPage() {
                 删除 ({selectedChats.size})
               </button>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
-      </div>
     </div>
   );
 }

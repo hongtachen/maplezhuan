@@ -21,6 +21,7 @@ import { db } from "@/lib/firebase/config";
 import { ItemDocument, recordHistory } from "@/lib/firebase/firestore";
 import { useSellerProfile, formatSellerRating } from "@/hooks/useSellerProfile";
 import LocationPicker from "@/components/ui/LocationPicker";
+import { listingHeroStyle } from "@/lib/motion/viewTransition";
 
 export default function ListingDetailPage() {
   const params = useParams();
@@ -317,6 +318,7 @@ export default function ListingDetailPage() {
               src={item.images[0]}
               alt={item.title}
               className="w-full h-full object-cover"
+              style={listingHeroStyle("item", id)}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#a1e8c7] to-[#7bcfa9] flex items-center justify-center">

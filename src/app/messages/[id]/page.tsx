@@ -38,6 +38,10 @@ import { submitReview } from "@/lib/firebase/reviews";
 import ChatItemBar from "@/components/chat/ChatItemBar";
 import ChatInputBar from "@/components/chat/ChatInputBar";
 import MessageBubble from "@/components/chat/MessageBubble";
+import AnimatedMessageItem, {
+  getMessageAlign,
+} from "@/components/motion/AnimatedMessageItem";
+import FadeModal from "@/components/motion/FadeModal";
 
 function isItemActive(status: string | undefined) {
   return status === "在售" || status === "招租中" || status === "已预留";
@@ -462,32 +466,37 @@ export default function ChatPage() {
       <div className="relative flex-1 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth">
           <div className="flex flex-col gap-4 max-w-[800px] mx-auto">
-            {messages.map((msg) => {
+            {messages.map((msg, index) => {
               const isMe = msg.senderId === user?.uid;
               return (
-                <MessageBubble
+                <AnimatedMessageItem
                   key={msg.id}
-                  msg={msg}
-                  isMe={isMe}
-                  isSeller={isSeller}
-                  canActOnRequests={canActOnRequests}
-                  itemType={itemType || "item"}
-                  isRequestResolved={
-                    !!(msg.id && resolvedRequestIds.has(msg.id))
-                  }
-                  onAcceptReserve={handleAcceptReserve}
-                  onConfirmSold={handleConfirmSold}
-                  onDecline={handleDecline}
-                  onReview={() => setShowReviewModal(true)}
-                  onConfirmPickup={handleConfirmPickup}
-                  onCopy={(label) =>
-                    showToast(
-                      label,
-                      label.includes("失败") ? "error" : "success",
-                    )
-                  }
-                  acting={acting}
-                />
+                  index={index}
+                  align={getMessageAlign(msg.msgType, isMe)}
+                >
+                  <MessageBubble
+                    msg={msg}
+                    isMe={isMe}
+                    isSeller={isSeller}
+                    canActOnRequests={canActOnRequests}
+                    itemType={itemType || "item"}
+                    isRequestResolved={
+                      !!(msg.id && resolvedRequestIds.has(msg.id))
+                    }
+                    onAcceptReserve={handleAcceptReserve}
+                    onConfirmSold={handleConfirmSold}
+                    onDecline={handleDecline}
+                    onReview={() => setShowReviewModal(true)}
+                    onConfirmPickup={handleConfirmPickup}
+                    onCopy={(label) =>
+                      showToast(
+                        label,
+                        label.includes("失败") ? "error" : "success",
+                      )
+                    }
+                    acting={acting}
+                  />
+                </AnimatedMessageItem>
               );
             })}
             <div ref={messagesEndRef} />
@@ -538,13 +547,13 @@ export default function ChatPage() {
         uploading={uploading}
       />
 
-      {showReviewModal && item && otherUser && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowReviewModal(false)}
-          />
-          <div className="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl">
+      <FadeModal
+        open={showReviewModal && !!(item && otherUser)}
+        onClose={() => setShowReviewModal(false)}
+        panelClassName="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl"
+      >
+        {item && otherUser && (
+          <>
             <h2 className="text-xl font-bold text-[#1f2933] mb-2 text-center">
               评价本次交易
             </h2>
@@ -619,9 +628,9 @@ export default function ChatPage() {
                 提交评价
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </FadeModal>
     </div>
   );
 }

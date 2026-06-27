@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useApp } from "./AppContext";
 import StatusBadge from "./StatusBadge";
 import { doc, updateDoc, increment } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import {
+  handleViewTransitionClick,
+  listingHeroStyle,
+} from "@/lib/motion/viewTransition";
 
 export type ListingType = "item" | "sublet";
 
@@ -44,23 +49,25 @@ interface ListingCardProps {
 
 export default function ListingCard({ listing }: ListingCardProps) {
   const { isFavorite, toggleFavorite } = useApp();
+  const router = useRouter();
   const favorited = isFavorite(listing.id);
+  const href =
+    listing.type === "sublet"
+      ? `/sublet/${listing.id}`
+      : `/listing/${listing.id}`;
 
   return (
     <Link
-      href={
-        listing.type === "sublet"
-          ? `/sublet/${listing.id}`
-          : `/listing/${listing.id}`
-      }
+      href={href}
+      onClick={(e) => handleViewTransitionClick(e, router, href)}
       className="flex flex-col cursor-pointer group"
     >
       <article className="flex flex-col h-full">
         {/* Image area */}
         <div
           className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 bg-gray-100"
-          style={
-            listing.image
+          style={{
+            ...(listing.image
               ? {
                   backgroundImage: `url(${listing.image})`,
                   backgroundSize: "cover",
@@ -68,8 +75,9 @@ export default function ListingCard({ listing }: ListingCardProps) {
                 }
               : {
                   background: `linear-gradient(135deg, ${listing.gradientFrom || "#e2e8f0"}, ${listing.gradientTo || "#cbd5e1"})`,
-                }
-          }
+                }),
+            ...listingHeroStyle(listing.type, listing.id),
+          }}
         >
           {/* Emoji placeholder fallback */}
           {!listing.image && listing.emoji && (

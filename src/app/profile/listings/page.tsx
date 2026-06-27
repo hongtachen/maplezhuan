@@ -14,6 +14,7 @@ import {
   changeListingStatus,
   buyerFromProfile,
 } from "@/lib/firebase/transactions";
+import FadeModal from "@/components/motion/FadeModal";
 
 const STATUS_TABS: ListingStatus[] = ["在售", "已预留", "已售"];
 
@@ -506,134 +507,126 @@ export default function MyListingsPage() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {deleteModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      <FadeModal
+        open={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        panelClassName="w-full max-w-[320px] bg-white rounded-[24px] shadow-2xl overflow-hidden p-6 text-center"
+      >
+        <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
+          <svg
+            className="w-7 h-7 text-rose-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-[#1f2933] mb-2">
+          确定要删除吗？
+        </h2>
+        <p className="text-[13px] text-[#5a6b73] mb-6">
+          删除后将无法恢复，相关聊天记录仍会保留。
+        </p>
+        <div className="flex gap-3">
+          <button
             onClick={() => setDeleteModal(null)}
-          />
-          <div className="relative w-full max-w-[320px] bg-white rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 p-6 text-center">
-            <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-7 h-7 text-rose-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </div>
-            <h2 className="text-xl font-bold text-[#1f2933] mb-2">
-              确定要删除吗？
+            className="flex-1 py-3 text-[14px] font-bold text-[#5a6b73] bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+          >
+            取消
+          </button>
+          <button
+            onClick={confirmDelete}
+            className="flex-1 py-3 text-[14px] font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors"
+          >
+            删除
+          </button>
+        </div>
+      </FadeModal>
+
+      <FadeModal
+        open={!!buyerModal}
+        onClose={() => setBuyerModal(null)}
+        panelClassName="w-full max-w-md bg-white rounded-[24px] shadow-2xl overflow-hidden"
+      >
+        {buyerModal && (
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-[#1f2933] mb-1">
+              选择交易对象
             </h2>
             <p className="text-[13px] text-[#5a6b73] mb-6">
-              删除后将无法恢复，相关聊天记录仍会保留。
+              为了保证评价真实性，请选择与您成交的买家
             </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteModal(null)}
-                className="flex-1 py-3 text-[14px] font-bold text-[#5a6b73] bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 py-3 text-[14px] font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors"
-              >
-                删除
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Buyer Selection Modal */}
-      {buyerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setBuyerModal(null)}
-          />
-          <div className="relative w-full max-w-md bg-white rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-[#1f2933] mb-1">
-                选择交易对象
-              </h2>
-              <p className="text-[13px] text-[#5a6b73] mb-6">
-                为了保证评价真实性，请选择与您成交的买家
-              </p>
-
-              {loadingBuyers ? (
-                <div className="flex justify-center py-8">
-                  <div className="w-8 h-8 border-4 border-[#2f9e6d] border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              ) : buyerModal.buyers.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-[#5a6b73] text-[14px] mb-4">
-                    没有找到近期与您私聊过的买家
-                  </p>
+            {loadingBuyers ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-4 border-[#2f9e6d] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : buyerModal.buyers.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-[#5a6b73] text-[14px] mb-4">
+                  没有找到近期与您私聊过的买家
+                </p>
+                <button
+                  onClick={() =>
+                    commitChangeStatus(buyerModal.id, buyerModal.status, null)
+                  }
+                  className="px-6 py-2 bg-[#f3fbf7] text-[#2f9e6d] rounded-xl font-bold hover:bg-[#2f9e6d]/10 transition-colors"
+                >
+                  跳过并标记为{buyerModal.status}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
+                {buyerModal.buyers.map((b) => (
                   <button
+                    key={b.uid}
                     onClick={() =>
-                      commitChangeStatus(buyerModal.id, buyerModal.status, null)
+                      commitChangeStatus(
+                        buyerModal.id,
+                        buyerModal.status,
+                        b.uid,
+                      )
                     }
-                    className="px-6 py-2 bg-[#f3fbf7] text-[#2f9e6d] rounded-xl font-bold hover:bg-[#2f9e6d]/10 transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-[rgba(31,41,51,0.08)] hover:bg-[#f3fbf7] hover:border-[#2f9e6d]/30 transition-all text-left"
                   >
-                    跳过并标记为{buyerModal.status}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
-                  {buyerModal.buyers.map((b) => (
-                    <button
-                      key={b.uid}
-                      onClick={() =>
-                        commitChangeStatus(
-                          buyerModal.id,
-                          buyerModal.status,
-                          b.uid,
-                        )
+                    <img
+                      src={
+                        b.avatarUrl ||
+                        `https://api.dicebear.com/7.x/adventurer/svg?seed=${b.uid}`
                       }
-                      className="flex items-center gap-3 p-3 rounded-xl border border-[rgba(31,41,51,0.08)] hover:bg-[#f3fbf7] hover:border-[#2f9e6d]/30 transition-all text-left"
-                    >
-                      <img
-                        src={
-                          b.avatarUrl ||
-                          `https://api.dicebear.com/7.x/adventurer/svg?seed=${b.uid}`
-                        }
-                        alt="avatar"
-                        className="w-10 h-10 rounded-full object-cover shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-[#1f2933] truncate">
-                          {b.nickname}
-                        </p>
-                        <p className="text-[11px] text-[#5a6b73]">
-                          选择该用户完成交易
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() =>
-                      commitChangeStatus(buyerModal.id, buyerModal.status, null)
-                    }
-                    className="mt-2 py-3 text-[13px] font-bold text-[#5a6b73] hover:text-[#1f2933] hover:bg-gray-50 rounded-xl transition-colors"
-                  >
-                    未在列表中？跳过选择直接标记
+                      alt="avatar"
+                      className="w-10 h-10 rounded-full object-cover shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-[#1f2933] truncate">
+                        {b.nickname}
+                      </p>
+                      <p className="text-[11px] text-[#5a6b73]">
+                        选择该用户完成交易
+                      </p>
+                    </div>
                   </button>
-                </div>
-              )}
-            </div>
+                ))}
+
+                <button
+                  onClick={() =>
+                    commitChangeStatus(buyerModal.id, buyerModal.status, null)
+                  }
+                  className="mt-2 py-3 text-[13px] font-bold text-[#5a6b73] hover:text-[#1f2933] hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  未在列表中？跳过选择直接标记
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </FadeModal>
     </>
   );
 }

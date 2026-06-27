@@ -21,6 +21,7 @@ import { db } from "@/lib/firebase/config";
 import { SubletDocument, recordHistory } from "@/lib/firebase/firestore";
 import { useSellerProfile, formatSellerRating } from "@/hooks/useSellerProfile";
 import LocationPicker from "@/components/ui/LocationPicker";
+import { listingHeroStyle } from "@/lib/motion/viewTransition";
 
 export default function SubletDetailPage() {
   const params = useParams();
@@ -314,6 +315,7 @@ export default function SubletDetailPage() {
               src={sublet.images[0]}
               alt={title}
               className="w-full h-full object-cover"
+              style={listingHeroStyle("sublet", id)}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#c7d2fe] to-[#a5b4fc] flex items-center justify-center">
