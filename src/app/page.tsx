@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import ListingCard, { ListingCardData } from "@/components/app/ListingCard";
 import MobileFilterModal from "@/components/app/MobileFilterModal";
+import { ListingGridSkeleton } from "@/components/motion/Skeleton";
+import { DURATION, EASE } from "@/lib/motion/tokens";
 
 import { useItems, useSublets } from "@/hooks/useListings";
 import { extractUniqueCities, buildLocationOptions } from "@/lib/listingCities";
@@ -22,8 +25,9 @@ export default function BrowsePage() {
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  const { items, loading: _itemsLoading } = useItems();
-  const { sublets, loading: _subletsLoading } = useSublets();
+  const { items, loading: itemsLoading } = useItems();
+  const { sublets, loading: subletsLoading } = useSublets();
+  const isLoading = activeTab === "item" ? itemsLoading : subletsLoading;
 
   // Map backend documents to ListingCardData (hooks already filter to 在售 / 招租中)
   const ACTIVE_LISTINGS: ListingCardData[] = items.map((item) => ({
@@ -704,26 +708,38 @@ export default function BrowsePage() {
               </div>
             </div>
 
-            {activeListings.length > 0 ? (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-8">
-                {activeListings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
-              </div>
-            ) : (
-              <div className="w-full py-20 flex flex-col items-center justify-center text-[#5a6b73]">
-                <div className="text-6xl mb-4 opacity-50">🔍</div>
-                <p className="text-base font-medium">
-                  抱歉，没有找到符合条件的商品
-                </p>
-                <button
-                  onClick={handleClearFilters}
-                  className="mt-4 text-[#2f9e6d] hover:text-[#267a56] font-semibold underline"
-                >
-                  清除筛选条件
-                </button>
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${activeTab}-${isLoading ? "loading" : "ready"}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: DURATION.fast, ease: EASE.out }}
+              >
+                {isLoading ? (
+                  <ListingGridSkeleton />
+                ) : activeListings.length > 0 ? (
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-8">
+                    {activeListings.map((listing) => (
+                      <ListingCard key={listing.id} listing={listing} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-full py-20 flex flex-col items-center justify-center text-[#5a6b73]">
+                    <div className="text-6xl mb-4 opacity-50">🔍</div>
+                    <p className="text-base font-medium">
+                      抱歉，没有找到符合条件的商品
+                    </p>
+                    <button
+                      onClick={handleClearFilters}
+                      className="mt-4 text-[#2f9e6d] hover:text-[#267a56] font-semibold underline"
+                    >
+                      清除筛选条件
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </section>
         </div>
       </div>

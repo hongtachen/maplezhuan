@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { EASE, SHEET_TRANSITION, SPRING } from "@/lib/motion/tokens";
 
 const tabs = [
   {
@@ -115,7 +117,13 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[rgba(31,41,51,0.08)] md:hidden">
+    <motion.nav
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
+      transition={{ ...SHEET_TRANSITION, ease: EASE.out }}
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[rgba(31,41,51,0.08)] md:hidden"
+    >
       {/* Safe area padding for iPhone home indicator */}
       <div className="flex items-stretch pb-safe">
         {tabs.map((tab) => {
@@ -151,9 +159,15 @@ export default function BottomNav() {
               <div className="relative">
                 {tab.icon(active)}
                 {tab.href === "/messages" && unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  <motion.span
+                    key={unreadCount}
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={SPRING.snappy}
+                    className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"
+                  >
                     {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
+                  </motion.span>
                 )}
               </div>
               <span
@@ -165,6 +179,6 @@ export default function BottomNav() {
           );
         })}
       </div>
-    </nav>
+    </motion.nav>
   );
 }

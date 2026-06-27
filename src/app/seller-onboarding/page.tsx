@@ -6,9 +6,17 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { updateUserProfile, UserProfile } from "@/lib/firebase/users";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
+import { useApp } from "@/components/app/AppContext";
+import FadeModal from "@/components/motion/FadeModal";
+
+type FormErrors = {
+  contact?: string;
+  agreement?: string;
+};
 
 export default function SellerOnboardingPage() {
   const router = useRouter();
+  const { showToast } = useApp();
   const { user, userProfile } = useAuthStore();
 
   const [wechat, setWechat] = useState("");
@@ -19,31 +27,43 @@ export default function SellerOnboardingPage() {
   const [isPublic, setIsPublic] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const contactInputClass = (hasError: boolean) =>
+    `w-full bg-[#f7f9fc] border rounded-[16px] pl-11 pr-4 py-3.5 text-[15px] outline-none transition-all ${
+      hasError
+        ? "border-rose-300 bg-rose-50/40 focus:bg-white focus:border-rose-400"
+        : "border-transparent focus:bg-white focus:border-[#2f9e6d]"
+    }`;
 
   const handleSubmit = async () => {
+    setErrors({});
+
+    if (!wechat && !phone) {
+      const message = "请至少填写一项联系方式（微信号或手机号）以便平台备案。";
+      setErrors({ contact: message });
+      showToast(message, "info");
+      return;
+    }
+    if (!agreed) {
+      const message = "请阅读并同意卖家规范承诺";
+      setErrors({ agreement: message });
+      showToast(message, "info");
+      return;
+    }
+
+    if (!user) {
+      showToast("未检测到登录用户，请重新登录", "error");
+      return;
+    }
+    if (!userProfile) {
+      showToast("用户资料尚未加载完成，请刷新页面重试", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      if (!wechat && !phone) {
-        alert("请至少填写一项联系方式（微信号或手机号）以便平台备案。");
-        return;
-      }
-      if (isPublic && !wechat && !phone) {
-        alert("如果您希望公开联系方式，请至少填写微信号或手机号。");
-        return;
-      }
-      if (!agreed) {
-        alert("请阅读并同意卖家规范承诺");
-        return;
-      }
-
-      if (!user) {
-        alert("错误：未检测到登录用户");
-        return;
-      }
-      if (!userProfile) {
-        alert("错误：用户资料尚未加载完成，请刷新页面重试");
-        return;
-      }
-
       const updates: Partial<UserProfile> = {
         isVerifiedSeller: true,
         wechat,
@@ -74,11 +94,16 @@ export default function SellerOnboardingPage() {
         },
       });
 
-      alert("🎉 恭喜！您已成功开通发布权限。");
+      showToast("恭喜！您已成功开通发布权限", "success");
       router.replace("/publish");
     } catch (error: unknown) {
       console.error("Submit error:", error);
-      alert("提交失败: " + ((error as Error).message || "未知错误"));
+      showToast(
+        "提交失败：" + ((error as Error).message || "未知错误"),
+        "error",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -179,9 +204,14 @@ export default function SellerOnboardingPage() {
                   <input
                     type="text"
                     value={wechat}
-                    onChange={(e) => setWechat(e.target.value)}
+                    onChange={(e) => {
+                      setWechat(e.target.value);
+                      if (errors.contact) {
+                        setErrors((prev) => ({ ...prev, contact: undefined }));
+                      }
+                    }}
                     placeholder="微信号"
-                    className="w-full bg-[#f7f9fc] border border-transparent rounded-[16px] pl-11 pr-4 py-3.5 text-[15px] outline-none focus:bg-white focus:border-[#2f9e6d] transition-all"
+                    className={contactInputClass(!!errors.contact)}
                   />
                 </div>
                 <div className="relative">
@@ -191,11 +221,34 @@ export default function SellerOnboardingPage() {
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (errors.contact) {
+                        setErrors((prev) => ({ ...prev, contact: undefined }));
+                      }
+                    }}
                     placeholder="手机号"
-                    className="w-full bg-[#f7f9fc] border border-transparent rounded-[16px] pl-11 pr-4 py-3.5 text-[15px] outline-none focus:bg-white focus:border-[#2f9e6d] transition-all"
+                    className={contactInputClass(!!errors.contact)}
                   />
                 </div>
+                {errors.contact && (
+                  <p className="text-[13px] text-rose-500 leading-relaxed flex items-start gap-1.5 px-1">
+                    <svg
+                      className="w-4 h-4 shrink-0 mt-0.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {errors.contact}
+                  </p>
+                )}
 
                 {/* Privacy Toggle */}
                 <div className="pt-4 mt-2 border-t border-[rgba(31,41,51,0.04)]">
@@ -248,13 +301,29 @@ export default function SellerOnboardingPage() {
 
             {/* Agreement */}
             <section className="px-2 pt-2">
-              <label className="flex items-start gap-3 cursor-pointer group">
+              <label
+                className={`flex items-start gap-3 cursor-pointer group rounded-[16px] p-3 -mx-1 transition-colors ${
+                  errors.agreement
+                    ? "bg-rose-50/60 ring-1 ring-rose-200"
+                    : "hover:bg-white/50"
+                }`}
+              >
                 <div className="relative flex items-center justify-center shrink-0 mt-[2px]">
                   <input
                     type="checkbox"
                     checked={agreed}
-                    onChange={(e) => setAgreed(e.target.checked)}
-                    className="peer appearance-none w-[18px] h-[18px] border-2 border-gray-300 rounded-[5px] cursor-pointer checked:bg-[#2f9e6d] checked:border-[#2f9e6d] transition-colors"
+                    onChange={(e) => {
+                      setAgreed(e.target.checked);
+                      if (errors.agreement) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          agreement: undefined,
+                        }));
+                      }
+                    }}
+                    className={`peer appearance-none w-[18px] h-[18px] border-2 rounded-[5px] cursor-pointer checked:bg-[#2f9e6d] checked:border-[#2f9e6d] transition-colors ${
+                      errors.agreement ? "border-rose-400" : "border-gray-300"
+                    }`}
                   />
                   <svg
                     className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none"
@@ -284,6 +353,24 @@ export default function SellerOnboardingPage() {
                   。
                 </div>
               </label>
+              {errors.agreement && (
+                <p className="text-[13px] text-rose-500 leading-relaxed flex items-start gap-1.5 px-2 mt-1">
+                  <svg
+                    className="w-4 h-4 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {errors.agreement}
+                </p>
+              )}
             </section>
           </div>
         </div>
@@ -295,82 +382,107 @@ export default function SellerOnboardingPage() {
           <div className="max-w-[500px] md:max-w-2xl w-full mx-auto px-4 sm:px-6 py-4 pb-8">
             <button
               onClick={handleSubmit}
-              className="w-full bg-[#2f9e6d] hover:bg-[#267a56] text-white font-bold text-[16px] py-4 rounded-[16px] shadow-[0_8px_20px_-8px_rgba(47,158,109,0.5)] transition-all active:scale-[0.98] flex items-center justify-center"
+              disabled={isSubmitting}
+              className="w-full bg-[#2f9e6d] hover:bg-[#267a56] disabled:bg-[#2f9e6d]/70 disabled:cursor-not-allowed text-white font-bold text-[16px] py-4 rounded-[16px] shadow-[0_8px_20px_-8px_rgba(47,158,109,0.5)] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              开启发布权限
+              {isSubmitting ? (
+                <>
+                  <svg
+                    className="w-5 h-5 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  提交中...
+                </>
+              ) : (
+                "开启发布权限"
+              )}
             </button>
           </div>
         </div>
 
-        {/* Guidelines Modal */}
-        {showGuidelines && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1f2933]/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-[24px] w-full max-w-[400px] overflow-hidden shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
-              <div className="p-6 border-b border-[rgba(31,41,51,0.04)] flex items-center justify-between bg-gray-50/50">
-                <h3 className="text-[16px] font-bold text-[#1f2933]">
-                  平台卖家行为规范
-                </h3>
-                <button
-                  onClick={() => setShowGuidelines(false)}
-                  className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[#5a6b73] hover:bg-gray-50 transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+        <FadeModal
+          open={showGuidelines}
+          onClose={() => setShowGuidelines(false)}
+          panelClassName="w-full max-w-[400px] bg-white rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
+        >
+          <div className="p-6 border-b border-[rgba(31,41,51,0.04)] flex items-center justify-between bg-gray-50/50 shrink-0">
+            <h3 className="text-[16px] font-bold text-[#1f2933]">
+              平台卖家行为规范
+            </h3>
+            <button
+              onClick={() => setShowGuidelines(false)}
+              className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[#5a6b73] hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="space-y-5 text-[14px] text-[#5a6b73] leading-relaxed">
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  1. 信息真实
+                </strong>
+                卖家应如实描述商品的新旧程度、瑕疵及历史使用情况，不得隐瞒重大质量问题。
               </div>
-              <div className="p-6 overflow-y-auto flex-1">
-                <div className="space-y-5 text-[14px] text-[#5a6b73] leading-relaxed">
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      1. 信息真实
-                    </strong>
-                    卖家应如实描述商品的新旧程度、瑕疵及历史使用情况，不得隐瞒重大质量问题。
-                  </div>
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      2. 严禁违禁品
-                    </strong>
-                    严禁发布黄赌毒、管制刀具、处方药及其他违反当地法律法规的物品。
-                  </div>
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      3. 遵守契约
-                    </strong>
-                    在与买家达成交易意向后，请勿随意毁约、涨价或“放鸽子”。
-                  </div>
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      4. 隐私保护
-                    </strong>
-                    请勿在公共区域泄露他人的个人隐私信息。
-                  </div>
-                </div>
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  2. 严禁违禁品
+                </strong>
+                严禁发布黄赌毒、管制刀具、处方药及其他违反当地法律法规的物品。
               </div>
-              <div className="p-5 border-t border-[rgba(31,41,51,0.04)] bg-white">
-                <button
-                  onClick={() => {
-                    setAgreed(true);
-                    setShowGuidelines(false);
-                  }}
-                  className="w-full bg-[#1f2933] text-white font-bold py-3.5 rounded-[16px] hover:bg-[#323d46] transition-colors active:scale-[0.98]"
-                >
-                  我已阅读并了解
-                </button>
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  3. 遵守契约
+                </strong>
+                在与买家达成交易意向后，请勿随意毁约、涨价或“放鸽子”。
+              </div>
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  4. 隐私保护
+                </strong>
+                请勿在公共区域泄露他人的个人隐私信息。
               </div>
             </div>
           </div>
-        )}
+          <div className="p-5 border-t border-[rgba(31,41,51,0.04)] bg-white shrink-0">
+            <button
+              onClick={() => {
+                setAgreed(true);
+                setShowGuidelines(false);
+              }}
+              className="w-full bg-[#1f2933] text-white font-bold py-3.5 rounded-[16px] hover:bg-[#323d46] transition-colors active:scale-[0.98]"
+            >
+              我已阅读并了解
+            </button>
+          </div>
+        </FadeModal>
       </div>
     </ProtectedRoute>
   );

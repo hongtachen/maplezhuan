@@ -2,14 +2,15 @@
 
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { AnimatePresence } from "motion/react";
 import { AppProvider } from "./AppContext";
 import BottomNav from "./BottomNav";
 import AppSidebar from "./AppSidebar";
+import RouteTransition from "@/components/motion/RouteTransition";
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Hide global navigation on specific dynamic routes to free up screen real estate
   const isChatRoom =
     pathname.startsWith("/messages/") && pathname !== "/messages";
   const isListingDetail =
@@ -28,18 +29,19 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <AppProvider>
-      {/* Desktop left sidebar */}
       <AppSidebar />
 
-      {/* Main content — offset by sidebar on desktop, padded for bottom nav on mobile */}
       <div className="min-h-dvh flex flex-col md:pl-16">
-        <main className={`${hideBottomNav ? "" : "pb-20 md:pb-0"}`}>
-          {children}
+        <main
+          className={`overflow-x-clip ${hideBottomNav ? "" : "pb-20 md:pb-0"}`}
+        >
+          <RouteTransition>{children}</RouteTransition>
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
-      {!hideBottomNav && <BottomNav />}
+      <AnimatePresence initial={false}>
+        {!hideBottomNav && <BottomNav key="bottom-nav" />}
+      </AnimatePresence>
     </AppProvider>
   );
 }
