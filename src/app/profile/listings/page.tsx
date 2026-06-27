@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 
 import { useMyListings, ListingStatus, MyListing } from "@/hooks/useMyListings";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/firebase/transactions";
 import FadeModal from "@/components/motion/FadeModal";
 import MotionPopover from "@/components/motion/MotionPopover";
+import ProductThumbnail from "@/components/ui/ProductThumbnail";
 
 const STATUS_TABS: ListingStatus[] = ["在售", "已预留", "已售"];
 
@@ -297,22 +299,31 @@ export default function MyListingsPage() {
                   >
                     {/* Top row */}
                     <div className="flex items-center gap-3 p-4 pb-3">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-16 h-16 rounded-[14px] object-cover shrink-0 border border-[rgba(31,41,51,0.08)]"
-                        />
-                      ) : (
-                        <div
-                          className="w-16 h-16 rounded-[14px] flex items-center justify-center text-3xl shrink-0"
-                          style={{
-                            background: `linear-gradient(135deg, ${item.gradientFrom}, ${item.gradientTo})`,
-                          }}
-                        >
-                          {item.emoji}
-                        </div>
-                      )}
+                      <Link
+                        href={
+                          item.emoji === "🏠"
+                            ? `/sublet/${item.id}`
+                            : `/listing/${item.id}`
+                        }
+                        className="shrink-0"
+                      >
+                        {item.image ? (
+                          <ProductThumbnail
+                            src={item.image}
+                            alt={item.title}
+                            className="w-16 h-16 rounded-[14px] border border-[rgba(31,41,51,0.08)] hover:opacity-90 transition-opacity"
+                          />
+                        ) : (
+                          <div
+                            className="w-16 h-16 rounded-[14px] flex items-center justify-center text-3xl hover:opacity-90 transition-opacity"
+                            style={{
+                              background: `linear-gradient(135deg, ${item.gradientFrom}, ${item.gradientTo})`,
+                            }}
+                          >
+                            {item.emoji}
+                          </div>
+                        )}
+                      </Link>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[#1f2933] text-[15px] truncate">
                           {item.title}

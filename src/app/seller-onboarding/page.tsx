@@ -418,7 +418,8 @@ export default function SellerOnboardingPage() {
         <FadeModal
           open={showGuidelines}
           onClose={() => setShowGuidelines(false)}
-          panelClassName="w-full max-w-[400px] bg-white rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
+          className="md:left-16"
+          panelClassName="w-full max-w-[400px] md:max-w-[480px] bg-white rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[80vh] min-h-0"
         >
           <div className="p-6 border-b border-[rgba(31,41,51,0.04)] flex items-center justify-between bg-gray-50/50 shrink-0">
             <h3 className="text-[16px] font-bold text-[#1f2933]">
@@ -443,7 +444,7 @@ export default function SellerOnboardingPage() {
               </svg>
             </button>
           </div>
-          <div className="p-6 overflow-y-auto flex-1">
+          <div className="p-6 overflow-y-auto flex-1 min-h-0">
             <div className="space-y-5 text-[14px] text-[#5a6b73] leading-relaxed">
               <div>
                 <strong className="text-[#1f2933] block mb-1">

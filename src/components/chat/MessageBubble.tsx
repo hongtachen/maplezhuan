@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MessageDocument } from "@/lib/firebase/firestore";
+import ImageLightbox from "@/components/ui/ImageLightbox";
 import TransactionRequestCard from "./TransactionRequestCard";
 import TransactionStatusCard from "./TransactionStatusCard";
 import FadeModal from "@/components/motion/FadeModal";
@@ -150,24 +151,24 @@ export default function MessageBubble({
           <img
             src={msg.imageUrl}
             alt="图片"
-            className="max-w-[240px] max-h-[240px] object-cover"
+            className="max-w-[240px] max-h-[240px] object-contain bg-gray-100"
           />
         </button>
         {msg.text && (
           <p className="text-[13px] text-[#5a6b73] mt-1 px-1">{msg.text}</p>
         )}
-        <FadeModal
-          open={imageExpanded}
-          onClose={() => setImageExpanded(false)}
-          overlayClassName="bg-black/90"
-          panelClassName="max-w-full max-h-full p-4 bg-transparent shadow-none"
-        >
-          <img
-            src={msg.imageUrl}
-            alt="大图"
-            className="max-w-full max-h-[85dvh] object-contain mx-auto rounded-lg"
-          />
-        </FadeModal>
+        {imageExpanded && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setImageExpanded(false)}
+          >
+            <img
+              src={msg.imageUrl}
+              alt="大图"
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+        )}
       </div>
     );
   }

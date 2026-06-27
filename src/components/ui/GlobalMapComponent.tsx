@@ -157,7 +157,7 @@ export default function GlobalMapComponent({
                           src={item.images[0]}
                           alt={item.title}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           unoptimized
                         />
                       </div>
@@ -203,7 +203,7 @@ export default function GlobalMapComponent({
                           src={sublet.images[0]}
                           alt={sublet.title ?? ""}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           unoptimized
                         />
                       </div>

@@ -213,12 +213,12 @@ export default function SellerProfilePage() {
                   }
                   className="bg-white rounded-[20px] overflow-hidden shadow-sm border border-[rgba(31,41,51,0.04)] hover:shadow-md transition-shadow group flex flex-col"
                 >
-                  <div className="w-full aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                  <div className="w-full aspect-[4/3] bg-gray-100 relative overflow-hidden flex items-center justify-center">
                     {item.images && item.images.length > 0 ? (
                       <img
                         src={item.images[0]}
                         alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="max-w-full max-h-full object-contain"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-4xl opacity-20 bg-gradient-to-br from-[#a1e8c7] to-[#7bcfa9]">

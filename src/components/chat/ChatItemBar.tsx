@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ItemDocument, SubletDocument } from "@/lib/firebase/firestore";
+import ProductThumbnail from "@/components/ui/ProductThumbnail";
 
 type Props = {
   itemId: string;
@@ -36,10 +37,10 @@ export default function ChatItemBar({
     >
       <div className="flex items-center gap-3 min-w-0">
         {item && "images" in item && item.images?.[0] ? (
-          <img
+          <ProductThumbnail
             src={item.images[0]}
-            alt=""
-            className="w-10 h-10 rounded-lg object-cover shrink-0"
+            alt={itemTitle}
+            className="w-10 h-10 rounded-lg shrink-0"
           />
         ) : (
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#a1e8c7] to-[#7bcfa9] flex items-center justify-center shrink-0">

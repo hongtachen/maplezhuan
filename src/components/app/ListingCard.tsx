@@ -75,20 +75,23 @@ export default function ListingCard({ listing }: ListingCardProps) {
       >
         {/* Image area */}
         <div
-          className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 bg-gray-100"
-          style={{
-            ...(listing.image
-              ? {
-                  backgroundImage: `url(${listing.image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }
-              : {
-                  background: `linear-gradient(135deg, ${listing.gradientFrom || "#e2e8f0"}, ${listing.gradientTo || "#cbd5e1"})`,
-                }),
-            ...listingHeroStyle(listing.type, listing.id),
-          }}
+          className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 bg-gray-100 flex items-center justify-center"
+          style={listingHeroStyle(listing.type, listing.id)}
         >
+          {listing.image ? (
+            <img
+              src={listing.image}
+              alt=""
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(135deg, ${listing.gradientFrom || "#e2e8f0"}, ${listing.gradientTo || "#cbd5e1"})`,
+              }}
+            />
+          )}
           {/* Emoji placeholder fallback */}
           {!listing.image && listing.emoji && (
             <div className="absolute inset-0 flex items-center justify-center opacity-25">

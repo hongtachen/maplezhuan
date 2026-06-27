@@ -21,7 +21,7 @@ import { db } from "@/lib/firebase/config";
 import { SubletDocument, recordHistory } from "@/lib/firebase/firestore";
 import { useSellerProfile, formatSellerRating } from "@/hooks/useSellerProfile";
 import LocationPicker from "@/components/ui/LocationPicker";
-import { listingHeroStyle } from "@/lib/motion/viewTransition";
+import ListingImageGallery from "@/components/ui/ListingImageGallery";
 import { ListingDetailSkeleton } from "@/components/motion/Skeleton";
 import FavoriteHeartIcon, {
   useFavoriteBounce,
@@ -294,20 +294,15 @@ export default function SubletDetailPage() {
 
       <div className="md:max-w-4xl md:mx-auto md:px-8 md:py-8 w-full pb-24 md:pb-32">
         {/* Placeholder Image Area */}
-        <div className="w-full aspect-[4/3] md:aspect-video bg-gray-100 md:rounded-3xl flex items-center justify-center overflow-hidden">
-          {sublet.images && sublet.images.length > 0 ? (
-            <img
-              src={sublet.images[0]}
-              alt={title}
-              className="w-full h-full object-cover"
-              style={listingHeroStyle("sublet", id)}
-            />
-          ) : (
+        <ListingImageGallery
+          images={sublet.images ?? []}
+          alt={title}
+          fallback={
             <div className="w-full h-full bg-gradient-to-br from-[#c7d2fe] to-[#a5b4fc] flex items-center justify-center">
               <span className="text-8xl md:text-9xl opacity-30">🏠</span>
             </div>
-          )}
-        </div>
+          }
+        />
 
         {/* Content Area */}
         <div className="px-5 py-6 md:px-0">
@@ -524,14 +519,16 @@ export default function SubletDetailPage() {
               </div>
             </section>
 
-            <section>
-              <h2 className="text-base font-bold text-[#1f2933] mb-3">
-                详细信息
-              </h2>
-              <p className="text-[15px] text-[#5a6b73] leading-relaxed whitespace-pre-wrap">
-                {sublet.description}
-              </p>
-            </section>
+            {sublet.description.length > 0 && (
+              <section>
+                <h2 className="text-base font-bold text-[#1f2933] mb-3">
+                  详细信息
+                </h2>
+                <p className="text-[15px] text-[#5a6b73] leading-relaxed whitespace-pre-wrap">
+                  {sublet.description}
+                </p>
+              </section>
+            )}
 
             <section>
               <h2 className="text-base font-bold text-[#1f2933] mb-3">
