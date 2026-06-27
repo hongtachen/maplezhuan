@@ -36,6 +36,14 @@ export default function ImageUpload({
     onImagesChange(newImages);
   };
 
+  const handleSetCover = (index: number) => {
+    if (index === 0) return;
+    const newImages = [...images];
+    const [cover] = newImages.splice(index, 1);
+    newImages.unshift(cover);
+    onImagesChange(newImages);
+  };
+
   return (
     <div className={`space-y-3 ${className}`}>
       <div className="flex flex-wrap gap-3">
@@ -49,7 +57,7 @@ export default function ImageUpload({
                 alt="Uploaded"
                 fill
                 sizes="100px"
-                className="object-cover rounded-[16px]"
+                className="object-contain rounded-[16px]"
               />
               <button
                 onClick={() => handleRemoveImage(idx)}
@@ -69,10 +77,18 @@ export default function ImageUpload({
                   />
                 </svg>
               </button>
-              {idx === 0 && (
+              {idx === 0 ? (
                 <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-md">
                   封面
                 </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSetCover(idx)}
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-md hover:bg-[#2f9e6d]/90 transition-colors whitespace-nowrap"
+                >
+                  设为封面
+                </button>
               )}
             </div>
           );

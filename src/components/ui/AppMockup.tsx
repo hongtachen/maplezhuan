@@ -246,7 +246,7 @@ export default function AppMockup() {
                             src={listing.image}
                             alt={listing.title}
                             fill
-                            className="object-cover"
+                            className="object-contain"
                             unoptimized
                           />
                         </div>
