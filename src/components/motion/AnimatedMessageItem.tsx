@@ -13,9 +13,12 @@ const alignClass: Record<MessageAlign, string> = {
 };
 
 type Props = {
-  index: number;
   align: MessageAlign;
   children: ReactNode;
+  /** Animate only on first appearance (initial load or new message). */
+  enter?: boolean;
+  /** Stagger index for initial batch only. */
+  staggerIndex?: number;
 };
 
 export function getMessageAlign(
@@ -32,18 +35,25 @@ export function getMessageAlign(
   return isMe ? "end" : "start";
 }
 
-/** Staggered entrance wrapper for chat message rows. */
-export default function AnimatedMessageItem({ index, align, children }: Props) {
+/** Entrance wrapper for chat rows — skips re-animation on Firestore updates. */
+export default function AnimatedMessageItem({
+  align,
+  children,
+  enter = false,
+  staggerIndex = 0,
+}: Props) {
   const reducedMotion = useReducedMotion();
+  const isInitialBatch = enter && staggerIndex < 15;
 
   return (
     <motion.div
-      initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+      initial={enter && !reducedMotion ? { opacity: 0, y: 8 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: DURATION.fast,
         ease: EASE.out,
-        delay: reducedMotion ? 0 : Math.min(index * 0.02, 0.24),
+        delay:
+          enter && !reducedMotion && isInitialBatch ? staggerIndex * 0.02 : 0,
       }}
       className={`flex w-full ${alignClass[align]}`}
     >

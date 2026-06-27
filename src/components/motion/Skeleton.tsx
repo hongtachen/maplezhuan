@@ -81,3 +81,25 @@ export function ChatListSkeleton({ count = 6 }: { count?: number }) {
     </div>
   );
 }
+
+export function ListingDetailSkeleton() {
+  return (
+    <div
+      className="flex flex-col min-h-screen bg-white md:max-w-4xl md:mx-auto md:px-8 md:py-8 w-full"
+      aria-label="加载中"
+      role="status"
+    >
+      <ShimmerBlock className="w-full aspect-[4/3] md:aspect-video md:rounded-3xl" />
+      <div className="px-5 py-6 md:px-0 space-y-4">
+        <ShimmerBlock className="h-7 w-4/5 rounded-lg" />
+        <ShimmerBlock className="h-8 w-1/3 rounded-lg" />
+        <div className="flex gap-2">
+          <ShimmerBlock className="h-6 w-20 rounded-full" />
+          <ShimmerBlock className="h-6 w-24 rounded-full" />
+        </div>
+        <ShimmerBlock className="h-24 w-full rounded-2xl" />
+        <ShimmerBlock className="h-14 w-full rounded-2xl" />
+      </div>
+    </div>
+  );
+}

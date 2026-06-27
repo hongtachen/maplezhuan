@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePublishStore } from "@/store/usePublishStore";
 import { uploadMultipleImages } from "@/lib/firebase/storage";
 import { addSublet } from "@/lib/firebase/firestore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
+import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
 
 export default function SubletStep4Page() {
   const router = useRouter();
@@ -14,6 +15,11 @@ export default function SubletStep4Page() {
   const { user } = useAuthStore();
   const { showToast } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handlePublishSuccessComplete = useCallback(() => {
+    router.push("/profile/listings");
+  }, [router]);
 
   const handleSubmit = async () => {
     if (!subletData.propertyType || !subletData.price || !subletData.address) {
@@ -84,8 +90,7 @@ export default function SubletStep4Page() {
       });
 
       clearSubletData();
-      showToast("发布成功！", "success");
-      router.push("/profile/listings"); // Redirect to listings
+      setShowSuccess(true);
     } catch (error) {
       console.error("Publish failed:", error);
       showToast("发布失败，请重试", "error");
@@ -330,6 +335,10 @@ export default function SubletStep4Page() {
           </div>
         </div>
       </div>
+      <PublishSuccessOverlay
+        open={showSuccess}
+        onComplete={handlePublishSuccessComplete}
+      />
     </div>
   );
 }

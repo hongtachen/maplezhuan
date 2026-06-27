@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { useApp } from "./AppContext";
 import StatusBadge from "./StatusBadge";
 import { doc, updateDoc, increment } from "firebase/firestore";
@@ -10,6 +11,10 @@ import {
   handleViewTransitionClick,
   listingHeroStyle,
 } from "@/lib/motion/viewTransition";
+import FavoriteHeartIcon, {
+  useFavoriteBounce,
+} from "@/components/motion/FavoriteHeartIcon";
+import { DURATION, EASE } from "@/lib/motion/tokens";
 
 export type ListingType = "item" | "sublet";
 
@@ -50,6 +55,7 @@ interface ListingCardProps {
 export default function ListingCard({ listing }: ListingCardProps) {
   const { isFavorite, toggleFavorite } = useApp();
   const router = useRouter();
+  const { bounceKey, bounceProps, triggerBounce } = useFavoriteBounce();
   const favorited = isFavorite(listing.id);
   const href =
     listing.type === "sublet"
@@ -62,7 +68,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
       onClick={(e) => handleViewTransitionClick(e, router, href)}
       className="flex flex-col cursor-pointer group"
     >
-      <article className="flex flex-col h-full">
+      <motion.article
+        className="flex flex-col h-full"
+        whileTap={{ scale: 0.985 }}
+        transition={{ duration: DURATION.fast, ease: EASE.out }}
+      >
         {/* Image area */}
         <div
           className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-2 bg-gray-100"
@@ -99,6 +109,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
               e.preventDefault();
               e.stopPropagation();
               const adding = !favorited;
+              if (adding) triggerBounce();
               toggleFavorite(listing.id, listing.type);
               try {
                 const collectionName =
@@ -113,31 +124,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
             aria-label={favorited ? "取消收藏" : "收藏"}
             className="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors shadow-sm"
           >
-            {favorited ? (
-              /* Filled heart */
-              <svg
-                className="w-4 h-4 text-rose-500"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-              </svg>
-            ) : (
-              /* Outline heart */
-              <svg
-                className="w-4 h-4 text-[#1f2933]/70"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                />
-              </svg>
-            )}
+            <FavoriteHeartIcon
+              favorited={favorited}
+              bounceKey={bounceKey}
+              bounceProps={bounceProps}
+            />
           </button>
 
           {/* Status badge */}
@@ -201,7 +192,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
             </span>
           </p>
         </div>
-      </article>
+      </motion.article>
     </Link>
   );
 }

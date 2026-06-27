@@ -7,6 +7,7 @@ import { updateUserProfile, UserProfile } from "@/lib/firebase/users";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import { useApp } from "@/components/app/AppContext";
+import FadeModal from "@/components/motion/FadeModal";
 
 type FormErrors = {
   contact?: string;
@@ -414,75 +415,74 @@ export default function SellerOnboardingPage() {
           </div>
         </div>
 
-        {/* Guidelines Modal */}
-        {showGuidelines && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1f2933]/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-[24px] w-full max-w-[400px] overflow-hidden shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
-              <div className="p-6 border-b border-[rgba(31,41,51,0.04)] flex items-center justify-between bg-gray-50/50">
-                <h3 className="text-[16px] font-bold text-[#1f2933]">
-                  平台卖家行为规范
-                </h3>
-                <button
-                  onClick={() => setShowGuidelines(false)}
-                  className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[#5a6b73] hover:bg-gray-50 transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+        <FadeModal
+          open={showGuidelines}
+          onClose={() => setShowGuidelines(false)}
+          panelClassName="w-full max-w-[400px] bg-white rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
+        >
+          <div className="p-6 border-b border-[rgba(31,41,51,0.04)] flex items-center justify-between bg-gray-50/50 shrink-0">
+            <h3 className="text-[16px] font-bold text-[#1f2933]">
+              平台卖家行为规范
+            </h3>
+            <button
+              onClick={() => setShowGuidelines(false)}
+              className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[#5a6b73] hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="space-y-5 text-[14px] text-[#5a6b73] leading-relaxed">
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  1. 信息真实
+                </strong>
+                卖家应如实描述商品的新旧程度、瑕疵及历史使用情况，不得隐瞒重大质量问题。
               </div>
-              <div className="p-6 overflow-y-auto flex-1">
-                <div className="space-y-5 text-[14px] text-[#5a6b73] leading-relaxed">
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      1. 信息真实
-                    </strong>
-                    卖家应如实描述商品的新旧程度、瑕疵及历史使用情况，不得隐瞒重大质量问题。
-                  </div>
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      2. 严禁违禁品
-                    </strong>
-                    严禁发布黄赌毒、管制刀具、处方药及其他违反当地法律法规的物品。
-                  </div>
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      3. 遵守契约
-                    </strong>
-                    在与买家达成交易意向后，请勿随意毁约、涨价或“放鸽子”。
-                  </div>
-                  <div>
-                    <strong className="text-[#1f2933] block mb-1">
-                      4. 隐私保护
-                    </strong>
-                    请勿在公共区域泄露他人的个人隐私信息。
-                  </div>
-                </div>
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  2. 严禁违禁品
+                </strong>
+                严禁发布黄赌毒、管制刀具、处方药及其他违反当地法律法规的物品。
               </div>
-              <div className="p-5 border-t border-[rgba(31,41,51,0.04)] bg-white">
-                <button
-                  onClick={() => {
-                    setAgreed(true);
-                    setShowGuidelines(false);
-                  }}
-                  className="w-full bg-[#1f2933] text-white font-bold py-3.5 rounded-[16px] hover:bg-[#323d46] transition-colors active:scale-[0.98]"
-                >
-                  我已阅读并了解
-                </button>
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  3. 遵守契约
+                </strong>
+                在与买家达成交易意向后，请勿随意毁约、涨价或“放鸽子”。
+              </div>
+              <div>
+                <strong className="text-[#1f2933] block mb-1">
+                  4. 隐私保护
+                </strong>
+                请勿在公共区域泄露他人的个人隐私信息。
               </div>
             </div>
           </div>
-        )}
+          <div className="p-5 border-t border-[rgba(31,41,51,0.04)] bg-white shrink-0">
+            <button
+              onClick={() => {
+                setAgreed(true);
+                setShowGuidelines(false);
+              }}
+              className="w-full bg-[#1f2933] text-white font-bold py-3.5 rounded-[16px] hover:bg-[#323d46] transition-colors active:scale-[0.98]"
+            >
+              我已阅读并了解
+            </button>
+          </div>
+        </FadeModal>
       </div>
     </ProtectedRoute>
   );

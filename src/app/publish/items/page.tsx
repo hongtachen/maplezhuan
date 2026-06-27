@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePublishStore } from "@/store/usePublishStore";
 import ImageUpload from "@/components/ui/ImageUpload";
@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
-import { useEffect } from "react";
+import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
 
 export default function ItemPublishPage() {
   const router = useRouter();
@@ -18,6 +18,7 @@ export default function ItemPublishPage() {
   const { user } = useAuthStore();
   const { showToast } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [locationMode, setLocationMode] = useState<"default" | "custom">(
     "default",
@@ -36,6 +37,10 @@ export default function ItemPublishPage() {
       });
     }
   }, [user]);
+
+  const handlePublishSuccessComplete = useCallback(() => {
+    router.push("/profile/listings");
+  }, [router]);
 
   const handleSubmit = async () => {
     let finalLocationData = null;
@@ -99,8 +104,7 @@ export default function ItemPublishPage() {
       });
 
       clearItemData();
-      showToast("发布成功！", "success");
-      router.push("/profile/listings");
+      setShowSuccess(true);
     } catch (error) {
       console.error("Publish failed:", error);
       showToast("发布失败，请重试", "error");
@@ -367,6 +371,10 @@ export default function ItemPublishPage() {
           </div>
         </div>
       </div>
+      <PublishSuccessOverlay
+        open={showSuccess}
+        onComplete={handlePublishSuccessComplete}
+      />
     </div>
   );
 }

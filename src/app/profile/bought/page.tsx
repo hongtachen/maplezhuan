@@ -9,6 +9,7 @@ import { useApp } from "@/components/app/AppContext";
 import { findChatByItemAndUsers } from "@/lib/firebase/transactions";
 import { submitReview } from "@/lib/firebase/reviews";
 import UserAvatar from "@/components/ui/UserAvatar";
+import BottomSheet from "@/components/motion/BottomSheet";
 
 export default function BoughtPage() {
   const router = useRouter();
@@ -177,13 +178,13 @@ export default function BoughtPage() {
         )}
       </div>
 
-      {reviewingId && reviewingItem && (
-        <div className="fixed inset-0 z-[200] flex flex-col justify-end">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setReviewingId(null)}
-          />
-          <div className="relative bg-white rounded-t-[28px] w-full max-w-[500px] mx-auto shadow-2xl animate-in slide-in-from-bottom duration-300">
+      <BottomSheet
+        open={!!reviewingId && !!reviewingItem}
+        onClose={() => setReviewingId(null)}
+        panelClassName="rounded-t-[28px] max-w-[500px] mx-auto w-full overflow-hidden"
+      >
+        {reviewingItem && (
+          <>
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-gray-200" />
             </div>
@@ -273,9 +274,9 @@ export default function BoughtPage() {
                 提交评价
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </BottomSheet>
     </div>
   );
 }

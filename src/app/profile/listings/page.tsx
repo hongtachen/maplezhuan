@@ -15,6 +15,7 @@ import {
   buyerFromProfile,
 } from "@/lib/firebase/transactions";
 import FadeModal from "@/components/motion/FadeModal";
+import MotionPopover from "@/components/motion/MotionPopover";
 
 const STATUS_TABS: ListingStatus[] = ["在售", "已预留", "已售"];
 
@@ -341,35 +342,28 @@ export default function MyListingsPage() {
                             <circle cx="12" cy="19" r="1.5" />
                           </svg>
                         </button>
-                        {menuOpen === item.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-40"
-                              onClick={() => setMenuOpen(null)}
-                            />
-                            <div className="absolute right-0 top-10 bg-white rounded-[16px] shadow-xl border border-[rgba(31,41,51,0.08)] z-50 overflow-hidden w-44 animate-in fade-in zoom-in-95 duration-150">
-                              <p className="text-[11px] font-bold text-[#5a6b73] px-4 pt-3 pb-1">
-                                改变状态
-                              </p>
-                              {ALL_STATUSES.filter(
-                                (s) => s !== item.status,
-                              ).map((s) => (
-                                <button
-                                  key={s}
-                                  onClick={() =>
-                                    initiateChangeStatus(item.id, s)
-                                  }
-                                  className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-[#1f2933] hover:bg-[#f3fbf7] transition-colors flex items-center gap-2"
-                                >
-                                  <span
-                                    className={`w-2 h-2 rounded-full ${statusStyle[s].dot}`}
-                                  />
-                                  标记为{s}
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
+                        <MotionPopover
+                          open={menuOpen === item.id}
+                          onClose={() => setMenuOpen(null)}
+                        >
+                          <p className="text-[11px] font-bold text-[#5a6b73] px-4 pt-3 pb-1">
+                            改变状态
+                          </p>
+                          {ALL_STATUSES.filter((s) => s !== item.status).map(
+                            (s) => (
+                              <button
+                                key={s}
+                                onClick={() => initiateChangeStatus(item.id, s)}
+                                className="w-full text-left px-4 py-2.5 text-[13px] font-medium text-[#1f2933] hover:bg-[#f3fbf7] transition-colors flex items-center gap-2"
+                              >
+                                <span
+                                  className={`w-2 h-2 rounded-full ${statusStyle[s].dot}`}
+                                />
+                                标记为{s}
+                              </button>
+                            ),
+                          )}
+                        </MotionPopover>
                       </div>
                     </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
@@ -47,6 +47,12 @@ function isItemActive(status: string | undefined) {
   return status === "在售" || status === "招租中" || status === "已预留";
 }
 
+type MessageFeed = {
+  chatId: string;
+  messages: MessageDocument[];
+  enteringMessageIds: string[];
+};
+
 export default function ChatPage() {
   const params = useParams();
   const router = useRouter();
@@ -55,7 +61,23 @@ export default function ChatPage() {
   const { showToast } = useApp();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState<MessageDocument[]>([]);
+  const [messageFeed, setMessageFeed] = useState<MessageFeed>({
+    chatId,
+    messages: [],
+    enteringMessageIds: [],
+  });
+  const messages = useMemo(
+    () => (messageFeed.chatId === chatId ? messageFeed.messages : []),
+    [messageFeed.chatId, messageFeed.messages, chatId],
+  );
+  const enteringIdSet = useMemo(
+    () =>
+      new Set(
+        messageFeed.chatId === chatId ? messageFeed.enteringMessageIds : [],
+      ),
+    [messageFeed, chatId],
+  );
+
   const [chat, setChat] = useState<ChatDocument | null>(null);
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [inputText, setInputText] = useState("");
@@ -156,6 +178,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!chatId) return;
+    const knownIds = new Set<string>();
     const q = query(
       collection(db, "messages"),
       where("chatId", "==", chatId),
@@ -165,7 +188,20 @@ export default function ChatPage() {
       const msgs = snapshot.docs.map(
         (d) => ({ id: d.id, ...d.data() }) as MessageDocument,
       );
-      setMessages(msgs);
+      const newEnterIds: string[] = [];
+      for (const m of msgs) {
+        if (m.id && !knownIds.has(m.id)) {
+          newEnterIds.push(m.id);
+        }
+      }
+      for (const m of msgs) {
+        if (m.id) knownIds.add(m.id);
+      }
+      setMessageFeed({
+        chatId,
+        messages: msgs,
+        enteringMessageIds: newEnterIds,
+      });
     });
     return () => unsubscribe();
   }, [chatId]);
@@ -468,10 +504,12 @@ export default function ChatPage() {
           <div className="flex flex-col gap-4 max-w-[800px] mx-auto">
             {messages.map((msg, index) => {
               const isMe = msg.senderId === user?.uid;
+              const enter = !!(msg.id && enteringIdSet.has(msg.id));
               return (
                 <AnimatedMessageItem
                   key={msg.id}
-                  index={index}
+                  enter={enter}
+                  staggerIndex={index}
                   align={getMessageAlign(msg.msgType, isMe)}
                 >
                   <MessageBubble

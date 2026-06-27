@@ -12,6 +12,7 @@ type Props = {
   children: ReactNode;
   className?: string;
   panelClassName?: string;
+  overlayClassName?: string;
 };
 
 export default function FadeModal({
@@ -20,6 +21,7 @@ export default function FadeModal({
   children,
   className,
   panelClassName,
+  overlayClassName,
 }: Props) {
   const reducedMotion = useReducedMotion();
 
@@ -53,7 +55,7 @@ export default function FadeModal({
           <motion.button
             type="button"
             aria-label="关闭"
-            className="absolute inset-0 bg-black/45 backdrop-blur-[2px] border-0 cursor-default"
+            className={`absolute inset-0 border-0 cursor-default ${overlayClassName ?? "bg-black/45 backdrop-blur-[2px]"}`}
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
