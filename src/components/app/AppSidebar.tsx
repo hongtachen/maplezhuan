@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { SPRING } from "@/lib/motion/tokens";
 
 const navItems = [
   {
@@ -154,9 +156,15 @@ export default function AppSidebar() {
               <div className="relative">
                 {item.icon(active)}
                 {item.href === "/messages" && unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  <motion.span
+                    key={unreadCount}
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={SPRING.snappy}
+                    className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"
+                  >
                     {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
+                  </motion.span>
                 )}
               </div>
               <span

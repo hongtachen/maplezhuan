@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { ChatListSkeleton } from "@/components/motion/Skeleton";
 import {
   collection,
   query,
@@ -125,9 +126,7 @@ export default function MessagesPage() {
       {/* Message List */}
       <div className="flex-1 max-w-[800px] w-full mx-auto">
         {loading ? (
-          <div className="flex justify-center py-20 text-[#5a6b73]">
-            加载中...
-          </div>
+          <ChatListSkeleton />
         ) : (
           chats.map((chat) => (
             <div
