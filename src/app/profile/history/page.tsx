@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useHistory } from "@/hooks/useHistory";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+import EmptyState from "@/components/ui/EmptyState";
+import { btnPrimary } from "@/lib/feedback/styles";
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -67,23 +70,21 @@ export default function HistoryPage() {
 
       <div className="flex-1 max-w-[500px] md:max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 py-4">
         {loading ? (
-          <div className="flex justify-center py-32 text-[#5a6b73]">
-            加载中...
-          </div>
+          <PageLoading />
         ) : history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="text-5xl mb-4">🔍</div>
-            <p className="text-[#1f2933] font-bold text-lg mb-1">
-              暂无浏览记录
-            </p>
-            <p className="text-[#5a6b73] text-sm">去逛逛，看看有什么好东西！</p>
-            <button
-              onClick={() => router.push("/")}
-              className="mt-6 bg-[#1f2933] text-white font-bold text-[14px] px-6 py-3 rounded-[14px] hover:bg-[#323d46] transition-colors"
-            >
-              去浏览
-            </button>
-          </div>
+          <EmptyState
+            emoji="🔍"
+            title="暂无浏览记录"
+            description="去逛逛，看看有什么好东西"
+            action={
+              <button
+                onClick={() => router.push("/")}
+                className={`px-6 ${btnPrimary}`}
+              >
+                去浏览
+              </button>
+            }
+          />
         ) : (
           <div className="flex flex-col gap-6">
             {groups.map((group) => {

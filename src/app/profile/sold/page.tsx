@@ -7,6 +7,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
 import { findChatByItemAndUsers } from "@/lib/firebase/transactions";
 import UserAvatar from "@/components/ui/UserAvatar";
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+import EmptyState from "@/components/ui/EmptyState";
 
 const statusStyles = {
   已完成: { bg: "bg-[#f3fbf7] border-[#2f9e6d]/20", text: "text-[#2f9e6d]" },
@@ -59,19 +61,13 @@ export default function SoldPage() {
 
       <div className="flex-1 max-w-[500px] md:max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
         {loading ? (
-          <div className="flex justify-center py-24 text-[#5a6b73]">
-            加载中...
-          </div>
+          <PageLoading />
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center col-span-full">
-            <div className="text-5xl mb-4">🤝</div>
-            <p className="text-[#1f2933] font-bold text-lg mb-1">
-              还没有卖出记录
-            </p>
-            <p className="text-[#5a6b73] text-sm">
-              发布的商品被买走后，记录会出现在这里。
-            </p>
-          </div>
+          <EmptyState
+            emoji="🤝"
+            title="还没有卖出记录"
+            description="发布的商品被买走后，记录会出现在这里"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {items.map((item) => {

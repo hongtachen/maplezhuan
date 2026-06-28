@@ -19,6 +19,8 @@ import {
 import { db } from "@/lib/firebase/config";
 import { ChatDocument } from "@/lib/firebase/firestore";
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+import EmptyState from "@/components/ui/EmptyState";
 
 type EnrichedChat = ChatDocument & {
   otherUser?: UserProfile | null;
@@ -243,8 +245,8 @@ export default function MessagesPage() {
         )}
 
         {!loading && chats.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#f3fbf7] flex items-center justify-center mb-4">
+          <EmptyState
+            icon={
               <svg
                 className="w-8 h-8 text-[#2f9e6d]"
                 viewBox="0 0 24 24"
@@ -258,9 +260,11 @@ export default function MessagesPage() {
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-            </div>
-            <p className="text-[#5a6b73] text-sm">暂无新消息</p>
-          </div>
+            }
+            title="暂无新消息"
+            description="与卖家或买家沟通后，对话会显示在这里"
+            className="py-16"
+          />
         )}
       </div>
 

@@ -10,6 +10,9 @@ import { findChatByItemAndUsers } from "@/lib/firebase/transactions";
 import { submitReview } from "@/lib/firebase/reviews";
 import UserAvatar from "@/components/ui/UserAvatar";
 import BottomSheet from "@/components/motion/BottomSheet";
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+import EmptyState from "@/components/ui/EmptyState";
+import { btnPrimary } from "@/lib/feedback/styles";
 
 export default function BoughtPage() {
   const router = useRouter();
@@ -90,19 +93,21 @@ export default function BoughtPage() {
 
       <div className="flex-1 max-w-[500px] md:max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
         {loading ? (
-          <div className="flex justify-center py-24 text-[#5a6b73]">
-            加载中...
-          </div>
+          <PageLoading />
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="text-5xl mb-4">🛍</div>
-            <p className="text-[#1f2933] font-bold text-lg mb-1">
-              还没有购买记录
-            </p>
-            <p className="text-[#5a6b73] text-sm">
-              淘到心仪物品后，记录会出现在这里。
-            </p>
-          </div>
+          <EmptyState
+            emoji="🛍"
+            title="还没有购买记录"
+            description="淘到心仪物品后，记录会出现在这里"
+            action={
+              <button
+                onClick={() => router.push("/")}
+                className={`px-6 ${btnPrimary}`}
+              >
+                去浏览
+              </button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {items.map((item) => (

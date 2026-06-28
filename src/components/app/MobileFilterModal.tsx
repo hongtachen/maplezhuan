@@ -14,6 +14,7 @@ interface MobileFilterModalProps {
   onClose: () => void;
   onApplySearch: () => void;
   onClearFilters: () => void;
+  isFilterBusy?: boolean;
   activeTab: "item" | "sublet";
   setActiveTab: (tab: "item" | "sublet") => void;
   itemLocation: string;
@@ -37,6 +38,7 @@ export default function MobileFilterModal({
   onClose,
   onApplySearch,
   onClearFilters,
+  isFilterBusy = false,
   activeTab,
   setActiveTab,
   itemLocation,
@@ -73,9 +75,10 @@ export default function MobileFilterModal({
         <div className="flex items-center gap-4">
           <button
             onClick={onClearFilters}
-            className="text-sm font-medium text-[#5a6b73] hover:text-[#1f2933] transition-colors"
+            disabled={isFilterBusy}
+            className="text-sm font-medium text-[#5a6b73] hover:text-[#1f2933] transition-colors disabled:opacity-50"
           >
-            清除全部
+            {isFilterBusy ? "清除中..." : "清除全部"}
           </button>
           <button
             onClick={onClose}
@@ -279,9 +282,13 @@ export default function MobileFilterModal({
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[rgba(31,41,51,0.08)] bg-white z-10">
         <button
           onClick={onApplySearch}
-          className="w-full py-4 rounded-xl bg-[#1f2933] hover:bg-black text-white font-medium text-base transition-colors"
+          disabled={isFilterBusy}
+          className="w-full py-4 rounded-xl bg-[#1f2933] hover:bg-black text-white font-medium text-base transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
-          搜索
+          {isFilterBusy && (
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          )}
+          {isFilterBusy ? "搜索中..." : "搜索"}
         </button>
       </div>
     </SideSheet>

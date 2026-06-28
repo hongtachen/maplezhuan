@@ -56,8 +56,15 @@ export default function SettingsPage() {
         return;
       }
       if (!nickname.trim()) {
-        showToast("昵称不能为空", "error");
+        showToast("昵称不能为空", "warning");
         return;
+      }
+
+      if (userProfile.isVerifiedSeller) {
+        if (!wechat.trim() && !phone.trim()) {
+          showToast("请至少填写一项联系方式（微信号或手机号）", "warning");
+          return;
+        }
       }
 
       setIsSaving(true);
@@ -296,9 +303,12 @@ export default function SettingsPage() {
           {/* Contact Details (Sellers Only) */}
           {userProfile.isVerifiedSeller && (
             <section className="bg-white rounded-[24px] p-5 sm:p-6 shadow-sm border border-[rgba(31,41,51,0.04)]">
-              <h2 className="text-[16px] font-bold text-[#1f2933] mb-4">
+              <h2 className="text-[16px] font-bold text-[#1f2933] mb-1">
                 发布联系方式
               </h2>
+              <p className="text-[12px] text-[#5a6b73] mb-4 leading-relaxed">
+                微信号和手机号至少填写一项，便于买家与您联系
+              </p>
               <div className="space-y-4">
                 <div>
                   <label className="block text-[13px] font-bold text-[#5a6b73] mb-1.5 ml-1">
@@ -312,7 +322,7 @@ export default function SettingsPage() {
                       type="text"
                       value={wechat}
                       onChange={(e) => setWechat(e.target.value)}
-                      placeholder="微信号 (选填)"
+                      placeholder="微信号"
                       className="w-full bg-[#f7f9fc] border border-transparent rounded-[16px] pl-11 pr-4 py-3 text-[15px] outline-none focus:bg-white focus:border-[#2f9e6d] transition-all text-[#1f2933]"
                     />
                   </div>
@@ -329,7 +339,7 @@ export default function SettingsPage() {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="手机号 (选填)"
+                      placeholder="手机号"
                       className="w-full bg-[#f7f9fc] border border-transparent rounded-[16px] pl-11 pr-4 py-3 text-[15px] outline-none focus:bg-white focus:border-[#2f9e6d] transition-all text-[#1f2933]"
                     />
                   </div>

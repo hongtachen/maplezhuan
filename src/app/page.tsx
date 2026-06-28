@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import ListingCard, { ListingCardData } from "@/components/app/ListingCard";
 import MobileFilterModal from "@/components/app/MobileFilterModal";
-import { ListingGridSkeleton } from "@/components/motion/Skeleton";
 import { DURATION, EASE } from "@/lib/motion/tokens";
+import EmptyState from "@/components/ui/EmptyState";
+import LoadingSpinner, { PageLoading } from "@/components/ui/LoadingSpinner";
 
 import { useItems, useSublets } from "@/hooks/useListings";
 import { extractUniqueCities, buildLocationOptions } from "@/lib/listingCities";
@@ -27,7 +28,7 @@ export default function BrowsePage() {
 
   const { items, loading: itemsLoading } = useItems();
   const { sublets, loading: subletsLoading } = useSublets();
-  const isLoading = activeTab === "item" ? itemsLoading : subletsLoading;
+  const [isFilterBusy, setIsFilterBusy] = useState(false);
 
   // Map backend documents to ListingCardData (hooks already filter to 在售 / 招租中)
   const ACTIVE_LISTINGS: ListingCardData[] = items.map((item) => ({
@@ -145,8 +146,14 @@ export default function BrowsePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const bumpFilterBusy = () => {
+    setIsFilterBusy(true);
+    window.setTimeout(() => setIsFilterBusy(false), 400);
+  };
+
   const handleApplySearch = () => {
     setActiveDropdown(null);
+    bumpFilterBusy();
     setAppliedFilters({
       itemLocation,
       subletLocation,
@@ -161,11 +168,13 @@ export default function BrowsePage() {
 
   const handleClearKeyword = (e: React.MouseEvent) => {
     e.stopPropagation();
+    bumpFilterBusy();
     setKeyword("");
     setAppliedFilters((prev) => ({ ...prev, keyword: "" }));
   };
 
   const handleClearFilters = () => {
+    bumpFilterBusy();
     setItemLocation("全部城市");
     setSubletLocation("全部城市");
     setSubletTerm("不限");
@@ -199,10 +208,22 @@ export default function BrowsePage() {
     itemCategory !== "all" ||
     keyword !== "";
 
+  const hasAppliedFilters =
+    (activeTab === "item"
+      ? appliedFilters.itemLocation !== "全部城市"
+      : appliedFilters.subletLocation !== "全部城市") ||
+    appliedFilters.subletTerm !== "不限" ||
+    appliedFilters.roomType !== "不限" ||
+    appliedFilters.renewable !== "不限" ||
+    appliedFilters.itemCategory !== "all" ||
+    appliedFilters.keyword.trim() !== "";
+
+  const baseListings = activeTab === "item" ? ACTIVE_LISTINGS : ACTIVE_SUBLETS;
+  const isLoading = activeTab === "item" ? itemsLoading : subletsLoading;
+  const showResultsBusy = isLoading || isFilterBusy;
+
   // Filtering Logic
-  const activeListings = (
-    activeTab === "item" ? ACTIVE_LISTINGS : ACTIVE_SUBLETS
-  ).filter((listing) => {
+  const activeListings = baseListings.filter((listing) => {
     const locFilter =
       activeTab === "item"
         ? appliedFilters.itemLocation
@@ -591,30 +612,36 @@ export default function BrowsePage() {
                   e.stopPropagation();
                   handleClearFilters();
                 }}
-                className="text-xs font-medium text-[#5a6b73] hover:text-[#1f2933] px-3 transition-colors"
+                disabled={isFilterBusy}
+                className="text-xs font-medium text-[#5a6b73] hover:text-[#1f2933] px-3 transition-colors disabled:opacity-50"
               >
-                清除所有
+                {isFilterBusy ? "清除中..." : "清除所有"}
               </button>
             )}
 
             <button
               onClick={handleApplySearch}
-              className="w-12 h-12 shrink-0 rounded-full bg-[#2f9e6d] flex items-center justify-center transition-colors shadow-md ml-2 mr-2 hover:bg-[#267a56]"
+              disabled={isFilterBusy}
+              className="w-12 h-12 shrink-0 rounded-full bg-[#2f9e6d] flex items-center justify-center transition-colors shadow-md ml-2 mr-2 hover:bg-[#267a56] disabled:opacity-60"
             >
-              <svg
-                className="w-5 h-5 text-white"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-4.35-4.35"
-                />
-              </svg>
+              {isFilterBusy ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg
+                  className="w-5 h-5 text-white"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-4.35-4.35"
+                  />
+                </svg>
+              )}
             </button>
           </div>
 
@@ -710,33 +737,54 @@ export default function BrowsePage() {
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${activeTab}-${isLoading ? "loading" : "ready"}`}
+                key={`${activeTab}-${showResultsBusy ? "loading" : "ready"}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: DURATION.fast, ease: EASE.out }}
+                className="relative min-h-[280px]"
               >
-                {isLoading ? (
-                  <ListingGridSkeleton />
+                {showResultsBusy ? (
+                  <PageLoading
+                    label={isFilterBusy ? "正在更新结果..." : "加载中..."}
+                  />
                 ) : activeListings.length > 0 ? (
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-8">
                     {activeListings.map((listing) => (
                       <ListingCard key={listing.id} listing={listing} />
                     ))}
                   </div>
+                ) : baseListings.length === 0 ? (
+                  <EmptyState
+                    emoji={activeTab === "item" ? "📦" : "🏠"}
+                    title={
+                      activeTab === "item" ? "还没有在售闲置" : "还没有招租房源"
+                    }
+                    description={
+                      activeTab === "item"
+                        ? "成为第一个发布闲置的人，让好物找到新主人"
+                        : "暂无发布房源"
+                    }
+                  />
                 ) : (
-                  <div className="w-full py-20 flex flex-col items-center justify-center text-[#5a6b73]">
-                    <div className="text-6xl mb-4 opacity-50">🔍</div>
-                    <p className="text-base font-medium">
-                      抱歉，没有找到符合条件的商品
-                    </p>
-                    <button
-                      onClick={handleClearFilters}
-                      className="mt-4 text-[#2f9e6d] hover:text-[#267a56] font-semibold underline"
-                    >
-                      清除筛选条件
-                    </button>
-                  </div>
+                  <EmptyState
+                    emoji="🔍"
+                    title="没有找到符合条件的商品"
+                    description="试试调整筛选条件，或清除筛选查看全部结果"
+                    action={
+                      hasAppliedFilters ? (
+                        <button
+                          type="button"
+                          onClick={handleClearFilters}
+                          disabled={isFilterBusy}
+                          className="inline-flex items-center gap-2 text-[#2f9e6d] hover:text-[#267a56] font-bold text-[14px] disabled:opacity-60"
+                        >
+                          {isFilterBusy && <LoadingSpinner size="sm" />}
+                          清除筛选条件
+                        </button>
+                      ) : undefined
+                    }
+                  />
                 )}
               </motion.div>
             </AnimatePresence>
@@ -749,6 +797,7 @@ export default function BrowsePage() {
         onClose={() => setShowMobileFilter(false)}
         onApplySearch={handleApplySearch}
         onClearFilters={handleClearFilters}
+        isFilterBusy={isFilterBusy}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         itemLocation={itemLocation}

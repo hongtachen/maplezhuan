@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { useApp } from "@/components/app/AppContext";
 import ListingCard, { ListingCardData } from "@/components/app/ListingCard";
 import { useItems, useSublets } from "@/hooks/useListings";
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+import EmptyState from "@/components/ui/EmptyState";
 
 export default function FavoritesPage() {
   const { favoriteIds } = useApp();
@@ -66,9 +68,7 @@ export default function FavoritesPage() {
       {/* Grid */}
       <div className="flex-1 max-w-[1280px] w-full mx-auto px-4 md:px-8 py-6">
         {loading ? (
-          <div className="flex justify-center py-24 text-[#5a6b73]">
-            加载中...
-          </div>
+          <PageLoading />
         ) : favoriteListings.length > 0 ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-8">
             {favoriteListings.map((listing) => (
@@ -76,8 +76,8 @@ export default function FavoritesPage() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-4">
+          <EmptyState
+            icon={
               <svg
                 className="w-8 h-8 text-[#5a6b73]"
                 viewBox="0 0 24 24"
@@ -91,12 +91,10 @@ export default function FavoritesPage() {
                   d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
                 />
               </svg>
-            </div>
-            <h3 className="text-[#1f2933] font-bold text-lg mb-1">暂无收藏</h3>
-            <p className="text-[#5a6b73] text-sm max-w-[200px]">
-              遇到喜欢的闲置或房源，点击右上角爱心即可收藏
-            </p>
-          </div>
+            }
+            title="暂无收藏"
+            description="遇到喜欢的闲置或房源，点击右上角爱心即可收藏"
+          />
         )}
       </div>
     </div>
