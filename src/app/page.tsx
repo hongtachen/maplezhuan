@@ -21,6 +21,25 @@ import {
   matchesLeaseTerm,
 } from "@/lib/browseFilters";
 
+function SearchIcon() {
+  return (
+    <svg
+      className="w-5 h-5 text-white"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 21l-4.35-4.35"
+      />
+    </svg>
+  );
+}
+
 export default function BrowsePage() {
   const [activeTab, setActiveTab] = useState<"item" | "sublet">("item");
   const [showMobileFilter, setShowMobileFilter] = useState(false);
@@ -84,7 +103,14 @@ export default function BrowsePage() {
   const [roomType, setRoomType] = useState("不限");
   const [renewable, setRenewable] = useState("不限");
   const [itemCategory, setItemCategory] = useState("all");
-  const [keyword, setKeyword] = useState("");
+  const [itemKeyword, setItemKeyword] = useState("");
+  const [subletKeyword, setSubletKeyword] = useState("");
+
+  const keyword = activeTab === "item" ? itemKeyword : subletKeyword;
+  const setKeyword = (value: string) => {
+    if (activeTab === "item") setItemKeyword(value);
+    else setSubletKeyword(value);
+  };
 
   const location = activeTab === "item" ? itemLocation : subletLocation;
   const setLocation = (city: string) => {
@@ -102,7 +128,8 @@ export default function BrowsePage() {
     roomType: "不限",
     renewable: "不限",
     itemCategory: "all",
-    keyword: "",
+    itemKeyword: "",
+    subletKeyword: "",
   });
 
   const appliedLocation =
@@ -154,69 +181,173 @@ export default function BrowsePage() {
   const handleApplySearch = () => {
     setActiveDropdown(null);
     bumpFilterBusy();
-    setAppliedFilters({
-      itemLocation,
-      subletLocation,
-      subletTerm,
-      roomType,
-      renewable,
-      itemCategory,
-      keyword,
-    });
+    setAppliedFilters((prev) =>
+      activeTab === "item"
+        ? {
+            ...prev,
+            itemLocation,
+            itemCategory,
+            itemKeyword,
+          }
+        : {
+            ...prev,
+            subletLocation,
+            subletTerm,
+            roomType,
+            renewable,
+            subletKeyword,
+          },
+    );
     setShowMobileFilter(false);
   };
 
   const handleClearKeyword = (e: React.MouseEvent) => {
     e.stopPropagation();
     bumpFilterBusy();
-    setKeyword("");
-    setAppliedFilters((prev) => ({ ...prev, keyword: "" }));
+    if (activeTab === "item") {
+      setItemKeyword("");
+      setAppliedFilters((prev) => ({ ...prev, itemKeyword: "" }));
+    } else {
+      setSubletKeyword("");
+      setAppliedFilters((prev) => ({ ...prev, subletKeyword: "" }));
+    }
+  };
+
+  const removeAppliedFilter = (key: string) => {
+    bumpFilterBusy();
+    if (key === "location") {
+      if (activeTab === "item") {
+        setItemLocation("全部城市");
+        setAppliedFilters((prev) => ({ ...prev, itemLocation: "全部城市" }));
+      } else {
+        setSubletLocation("全部城市");
+        setAppliedFilters((prev) => ({ ...prev, subletLocation: "全部城市" }));
+      }
+    } else if (key === "keyword") {
+      if (activeTab === "item") {
+        setItemKeyword("");
+        setAppliedFilters((prev) => ({ ...prev, itemKeyword: "" }));
+      } else {
+        setSubletKeyword("");
+        setAppliedFilters((prev) => ({ ...prev, subletKeyword: "" }));
+      }
+    } else if (key === "category") {
+      setItemCategory("all");
+      setAppliedFilters((prev) => ({ ...prev, itemCategory: "all" }));
+    } else if (key === "subletTerm") {
+      setSubletTerm("不限");
+      setAppliedFilters((prev) => ({ ...prev, subletTerm: "不限" }));
+    } else if (key === "roomType") {
+      setRoomType("不限");
+      setAppliedFilters((prev) => ({ ...prev, roomType: "不限" }));
+    } else if (key === "renewable") {
+      setRenewable("不限");
+      setAppliedFilters((prev) => ({ ...prev, renewable: "不限" }));
+    }
   };
 
   const handleClearFilters = () => {
     bumpFilterBusy();
-    setItemLocation("全部城市");
-    setSubletLocation("全部城市");
-    setSubletTerm("不限");
-    setRoomType("不限");
-    setRenewable("不限");
-    setItemCategory("all");
-    setKeyword("");
 
-    setAppliedFilters({
-      itemLocation: "全部城市",
-      subletLocation: "全部城市",
-      subletTerm: "不限",
-      roomType: "不限",
-      renewable: "不限",
-      itemCategory: "all",
-      keyword: "",
-    });
+    if (activeTab === "item") {
+      setItemLocation("全部城市");
+      setItemCategory("all");
+      setItemKeyword("");
+      setAppliedFilters((prev) => ({
+        ...prev,
+        itemLocation: "全部城市",
+        itemCategory: "all",
+        itemKeyword: "",
+      }));
+    } else {
+      setSubletLocation("全部城市");
+      setSubletTerm("不限");
+      setRoomType("不限");
+      setRenewable("不限");
+      setSubletKeyword("");
+      setAppliedFilters((prev) => ({
+        ...prev,
+        subletLocation: "全部城市",
+        subletTerm: "不限",
+        roomType: "不限",
+        renewable: "不限",
+        subletKeyword: "",
+      }));
+    }
 
-    // Close dropdowns and mobile modal
     setActiveDropdown(null);
     setShowMobileFilter(false);
   };
 
-  const hasFilters =
-    (activeTab === "item"
-      ? itemLocation !== "全部城市"
-      : subletLocation !== "全部城市") ||
-    subletTerm !== "不限" ||
-    roomType !== "不限" ||
-    renewable !== "不限" ||
-    itemCategory !== "all" ||
-    keyword !== "";
+  const hasPendingFilters =
+    activeTab === "item"
+      ? itemLocation !== appliedFilters.itemLocation ||
+        itemCategory !== appliedFilters.itemCategory ||
+        itemKeyword !== appliedFilters.itemKeyword
+      : subletLocation !== appliedFilters.subletLocation ||
+        subletTerm !== appliedFilters.subletTerm ||
+        roomType !== appliedFilters.roomType ||
+        renewable !== appliedFilters.renewable ||
+        subletKeyword !== appliedFilters.subletKeyword;
 
   const hasAppliedFilters =
-    (activeTab === "item"
-      ? appliedFilters.itemLocation !== "全部城市"
-      : appliedFilters.subletLocation !== "全部城市") ||
-    appliedFilters.subletTerm !== "不限" ||
-    appliedFilters.roomType !== "不限" ||
-    appliedFilters.renewable !== "不限" ||
-    appliedFilters.itemCategory !== "all" ||
-    appliedFilters.keyword.trim() !== "";
+    activeTab === "item"
+      ? appliedFilters.itemLocation !== "全部城市" ||
+        appliedFilters.itemCategory !== "all" ||
+        appliedFilters.itemKeyword.trim() !== ""
+      : appliedFilters.subletLocation !== "全部城市" ||
+        appliedFilters.subletTerm !== "不限" ||
+        appliedFilters.roomType !== "不限" ||
+        appliedFilters.renewable !== "不限" ||
+        appliedFilters.subletKeyword.trim() !== "";
+
+  const appliedKeyword =
+    activeTab === "item"
+      ? appliedFilters.itemKeyword
+      : appliedFilters.subletKeyword;
+
+  type AppliedChip = { key: string; label: string };
+
+  const appliedChips: AppliedChip[] = [];
+  const appliedLoc =
+    activeTab === "item"
+      ? appliedFilters.itemLocation
+      : appliedFilters.subletLocation;
+  if (appliedLoc !== "全部城市") {
+    appliedChips.push({
+      key: "location",
+      label: formatCityLabel(appliedLoc),
+    });
+  }
+  if (appliedKeyword.trim()) {
+    appliedChips.push({
+      key: "keyword",
+      label: `「${appliedKeyword.trim()}」`,
+    });
+  }
+  if (activeTab === "item" && appliedFilters.itemCategory !== "all") {
+    appliedChips.push({
+      key: "category",
+      label: getCategoryLabel(appliedFilters.itemCategory),
+    });
+  }
+  if (activeTab === "sublet") {
+    if (appliedFilters.subletTerm !== "不限") {
+      appliedChips.push({
+        key: "subletTerm",
+        label: appliedFilters.subletTerm,
+      });
+    }
+    if (appliedFilters.roomType !== "不限") {
+      appliedChips.push({
+        key: "roomType",
+        label: getRoomTypeLabel(appliedFilters.roomType),
+      });
+    }
+    if (appliedFilters.renewable !== "不限") {
+      appliedChips.push({ key: "renewable", label: appliedFilters.renewable });
+    }
+  }
 
   const baseListings = activeTab === "item" ? ACTIVE_LISTINGS : ACTIVE_SUBLETS;
   const isLoading = activeTab === "item" ? itemsLoading : subletsLoading;
@@ -238,13 +369,12 @@ export default function BrowsePage() {
       }
     }
 
-    // 2. Filter by Keyword
-    if (appliedFilters.keyword.trim() !== "") {
-      if (
-        !listing.title
-          .toLowerCase()
-          .includes(appliedFilters.keyword.toLowerCase())
-      )
+    const keywordFilter =
+      activeTab === "item"
+        ? appliedFilters.itemKeyword
+        : appliedFilters.subletKeyword;
+    if (keywordFilter.trim() !== "") {
+      if (!listing.title.toLowerCase().includes(keywordFilter.toLowerCase()))
         return false;
     }
 
@@ -276,6 +406,12 @@ export default function BrowsePage() {
 
     return true;
   });
+
+  const searchButtonClass = `w-12 h-12 shrink-0 rounded-full flex items-center justify-center transition-all shadow-md disabled:opacity-60 ${
+    hasPendingFilters
+      ? "bg-[#2f9e6d] ring-2 ring-[#2f9e6d] ring-offset-2 shadow-[0_0_0_4px_rgba(47,158,109,0.25)] hover:bg-[#267a56]"
+      : "bg-[#2f9e6d] hover:bg-[#267a56]"
+  }`;
 
   return (
     <div className="flex flex-col min-h-full">
@@ -605,8 +741,8 @@ export default function BrowsePage() {
               </>
             )}
 
-            {/* Clear Filters Button (Desktop) */}
-            {hasFilters && (
+            {/* Clear Filters — only when filters are already applied */}
+            {hasAppliedFilters && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -622,31 +758,27 @@ export default function BrowsePage() {
             <button
               onClick={handleApplySearch}
               disabled={isFilterBusy}
-              className="w-12 h-12 shrink-0 rounded-full bg-[#2f9e6d] flex items-center justify-center transition-colors shadow-md ml-2 mr-2 hover:bg-[#267a56] disabled:opacity-60"
+              className={`${searchButtonClass} ml-2 mr-2`}
+              aria-label={hasPendingFilters ? "应用筛选" : "搜索"}
+              title={hasPendingFilters ? "应用筛选" : "搜索"}
             >
               {isFilterBusy ? (
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <svg
-                  className="w-5 h-5 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-4.35-4.35"
-                  />
-                </svg>
+                <SearchIcon />
               )}
             </button>
           </div>
 
+          {hasPendingFilters && (
+            <p className="hidden md:flex items-center gap-1.5 text-[13px] text-[#2f9e6d] font-medium mb-3 -mt-1 px-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2f9e6d] animate-pulse shrink-0" />
+              有新筛选，点击搜索键来查看结果
+            </p>
+          )}
+
           {/* Mobile Search Bar (hidden on desktop) */}
-          <div className="flex md:hidden items-center gap-3 mb-4">
+          <div className="flex md:hidden items-center gap-2 mb-2">
             <div className="flex-1 flex items-center bg-white rounded-2xl px-4 py-3.5 border border-[rgba(31,41,51,0.08)] shadow-sm">
               <svg
                 className="w-5 h-5 text-[#1f2933] mr-2 shrink-0"
@@ -694,9 +826,27 @@ export default function BrowsePage() {
               )}
             </div>
             <button
-              onClick={() => setShowMobileFilter(true)}
-              className="w-12 h-12 shrink-0 flex items-center justify-center rounded-2xl bg-white border border-[rgba(31,41,51,0.08)] shadow-sm"
+              type="button"
+              onClick={handleApplySearch}
+              disabled={isFilterBusy}
+              className={searchButtonClass}
+              aria-label={hasPendingFilters ? "应用筛选" : "搜索"}
             >
+              {isFilterBusy ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <SearchIcon />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMobileFilter(true)}
+              className="relative w-12 h-12 shrink-0 flex items-center justify-center rounded-2xl bg-white border border-[rgba(31,41,51,0.08)] shadow-sm"
+              aria-label="打开筛选"
+            >
+              {hasPendingFilters && (
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#2f9e6d] ring-2 ring-white" />
+              )}
               <svg
                 className="w-5 h-5 text-[#1f2933]"
                 viewBox="0 0 24 24"
@@ -713,6 +863,15 @@ export default function BrowsePage() {
             </button>
           </div>
 
+          {hasPendingFilters && (
+            <p className="flex md:hidden items-center gap-1.5 text-[13px] text-[#2f9e6d] font-medium mb-3 px-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2f9e6d] animate-pulse shrink-0" />
+              已选择条件，点击搜索查看结果
+            </p>
+          )}
+
+          {!hasPendingFilters && <div className="md:hidden mb-2" />}
+
           {/* Removed Desktop Filter Chips to use the sliding Modal exclusively */}
         </div>
       </header>
@@ -722,18 +881,55 @@ export default function BrowsePage() {
         <div className="max-w-[1280px] mx-auto px-4 md:px-8 pb-12">
           {/* Unified Listing Section */}
           <section className="mb-10">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg md:text-xl font-bold text-[#1f2933]">
+            <div className="flex items-center justify-between mb-3 gap-3">
+              <h2 className="text-lg md:text-xl font-bold text-[#1f2933] min-w-0">
                 {appliedLocation !== "全部城市"
                   ? `${formatCityLabel(appliedLocation)} · ${activeTab === "item" ? "在售闲置" : "招租房源"}`
                   : activeTab === "item"
                     ? "正在出售"
                     : "正在招租"}
               </h2>
-              <div className="text-sm font-medium text-[#5a6b73]">
+              <div className="text-sm font-medium text-[#5a6b73] shrink-0">
                 共 {activeListings.length} 条结果
               </div>
             </div>
+
+            {hasAppliedFilters && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {appliedChips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={() => removeAppliedFilter(chip.key)}
+                    disabled={isFilterBusy}
+                    className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full bg-white border border-[rgba(31,41,51,0.1)] text-[13px] font-medium text-[#1f2933] hover:border-[#2f9e6d]/40 hover:bg-[#f3fbf7] transition-colors disabled:opacity-50"
+                  >
+                    {chip.label}
+                    <svg
+                      className="w-3.5 h-3.5 text-[#5a6b73]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  disabled={isFilterBusy}
+                  className="text-[13px] font-bold text-[#5a6b73] hover:text-[#1f2933] px-2 py-1.5 transition-colors disabled:opacity-50"
+                >
+                  清除全部
+                </button>
+              </div>
+            )}
 
             <AnimatePresence mode="wait">
               <motion.div
@@ -798,6 +994,8 @@ export default function BrowsePage() {
         onApplySearch={handleApplySearch}
         onClearFilters={handleClearFilters}
         isFilterBusy={isFilterBusy}
+        hasAppliedFilters={hasAppliedFilters}
+        hasPendingFilters={hasPendingFilters}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         itemLocation={itemLocation}

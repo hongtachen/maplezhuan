@@ -15,6 +15,8 @@ interface MobileFilterModalProps {
   onApplySearch: () => void;
   onClearFilters: () => void;
   isFilterBusy?: boolean;
+  hasAppliedFilters?: boolean;
+  hasPendingFilters?: boolean;
   activeTab: "item" | "sublet";
   setActiveTab: (tab: "item" | "sublet") => void;
   itemLocation: string;
@@ -39,6 +41,8 @@ export default function MobileFilterModal({
   onApplySearch,
   onClearFilters,
   isFilterBusy = false,
+  hasAppliedFilters = false,
+  hasPendingFilters = false,
   activeTab,
   setActiveTab,
   itemLocation,
@@ -73,13 +77,15 @@ export default function MobileFilterModal({
       <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(31,41,51,0.08)]">
         <h2 className="text-lg font-bold text-[#1f2933]">筛选</h2>
         <div className="flex items-center gap-4">
-          <button
-            onClick={onClearFilters}
-            disabled={isFilterBusy}
-            className="text-sm font-medium text-[#5a6b73] hover:text-[#1f2933] transition-colors disabled:opacity-50"
-          >
-            {isFilterBusy ? "清除中..." : "清除全部"}
-          </button>
+          {hasAppliedFilters && (
+            <button
+              onClick={onClearFilters}
+              disabled={isFilterBusy}
+              className="text-sm font-medium text-[#5a6b73] hover:text-[#1f2933] transition-colors disabled:opacity-50"
+            >
+              {isFilterBusy ? "清除中..." : "清除全部"}
+            </button>
+          )}
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-[#1f2933] transition-colors"
@@ -100,6 +106,13 @@ export default function MobileFilterModal({
           </button>
         </div>
       </div>
+
+      {hasPendingFilters && (
+        <div className="px-5 py-2.5 bg-[#f3fbf7] border-b border-[#2f9e6d]/15 text-[13px] text-[#2f9e6d] font-medium flex items-center gap-1.5 shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#2f9e6d] animate-pulse" />
+          选择完成后，点击下方搜索生效
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex border-b border-[rgba(31,41,51,0.08)] shrink-0">
@@ -285,10 +298,14 @@ export default function MobileFilterModal({
           disabled={isFilterBusy}
           className="w-full py-4 rounded-xl bg-[#1f2933] hover:bg-black text-white font-medium text-base transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
-          {isFilterBusy && (
+          {isFilterBusy ? (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          )}
-          {isFilterBusy ? "搜索中..." : "搜索"}
+          ) : null}
+          {isFilterBusy
+            ? "搜索中..."
+            : hasPendingFilters
+              ? "应用筛选"
+              : "搜索"}
         </button>
       </div>
     </SideSheet>
