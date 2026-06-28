@@ -24,29 +24,36 @@ export default function FavoritesPage() {
       title: i.title,
       price: i.price,
       location: i.location,
-      neighbourhood: "", // add if needed
+      city: i.city || i.locationData?.city,
+      neighbourhood: "",
       condition: i.condition,
       rating: 5.0,
       status: i.status === "在售" ? "available" : "sold",
       isTopSeller: false,
-      emoji: "📦",
-      gradientFrom: "#a1e8c7",
-      gradientTo: "#7bcfa9",
+      image: i.images?.[0],
+      itemCategory: i.category,
     }));
 
     const mappedSublets: ListingCardData[] = sublets.map((s) => ({
       id: s.id || "",
       type: "sublet",
-      title: s.propertyType,
+      title: s.title || `${s.roomTypes?.[0] || "房间"} in ${s.propertyType}`,
       price: s.price,
       priceUnit: "/月",
       location: s.address,
-      neighbourhood: "",
+      city: s.city || s.locationData?.city,
+      neighbourhood: s.hideAddress ? "隐蔽地址" : "",
       rating: 5.0,
       status: s.status === "招租中" ? "available" : "sold",
-      emoji: "🏠",
-      gradientFrom: "#a1e8c7",
-      gradientTo: "#7bcfa9",
+      image: s.images?.[0],
+      roomType: s.roomTypes?.[0],
+      subletTerm: s.leaseTerms?.[0],
+      renewable:
+        s.renewable === true
+          ? "可续租"
+          : s.renewable === false
+            ? "不可续租"
+            : undefined,
     }));
 
     const allListings = [...mappedItems, ...mappedSublets];

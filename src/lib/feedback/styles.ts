@@ -52,3 +52,7 @@ export const btnSecondary =
 
 export const btnDanger =
   "py-3 text-[14px] font-bold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors active:scale-[0.98]";
+
+/** Inline form / field validation messages (pair with FEEDBACK[type].text) */
+export const inlineFeedback =
+  "text-[13px] leading-relaxed flex items-start gap-1.5";

@@ -110,7 +110,7 @@ export default function ImageLightbox({
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 rounded-full bg-white/12 backdrop-blur-xl border border-white/30 text-white flex items-center justify-center shadow-[0_4px_24px_rgba(0,0,0,0.2)] hover:bg-white/22 active:scale-[0.86] transition-all duration-200 ease-out z-20"
+        className="absolute top-[max(1rem,env(safe-area-inset-top,0px))] right-4 md:top-6 md:right-6 w-10 h-10 rounded-full bg-white/12 backdrop-blur-xl border border-white/30 text-white flex items-center justify-center shadow-[0_4px_24px_rgba(0,0,0,0.2)] hover:bg-white/22 active:scale-[0.86] transition-all duration-200 ease-out z-20"
         aria-label="关闭"
       >
         <svg

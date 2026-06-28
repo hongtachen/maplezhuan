@@ -7,7 +7,7 @@ import {
   SUBLET_RENEWABLE_OPTIONS,
   formatCityLabel,
 } from "@/lib/browseFilters";
-import SideSheet from "@/components/motion/SideSheet";
+import FullScreenSheet from "@/components/motion/FullScreenSheet";
 
 interface MobileFilterModalProps {
   isOpen: boolean;
@@ -67,14 +67,9 @@ export default function MobileFilterModal({
     activeTab === "item" ? itemLocationOptions : subletLocationOptions;
 
   return (
-    <SideSheet
-      open={isOpen}
-      onClose={onClose}
-      className="md:hidden"
-      panelClassName="md:hidden relative"
-    >
+    <FullScreenSheet open={isOpen} onClose={onClose} className="md:hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(31,41,51,0.08)]">
+      <div className="flex items-center justify-between px-5 py-4 pt-[max(1rem,env(safe-area-inset-top,0px))] border-b border-[rgba(31,41,51,0.08)] shrink-0">
         <h2 className="text-lg font-bold text-[#1f2933]">筛选</h2>
         <div className="flex items-center gap-4">
           {hasAppliedFilters && (
@@ -145,7 +140,7 @@ export default function MobileFilterModal({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto pb-24">
+      <div className="flex-1 min-h-0 overflow-y-auto pb-4">
         {activeTab === "sublet" ? (
           <div className="px-4 py-5 flex flex-col gap-6">
             {/* Location */}
@@ -292,7 +287,7 @@ export default function MobileFilterModal({
       </div>
 
       {/* Footer Button */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[rgba(31,41,51,0.08)] bg-white z-10">
+      <div className="shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-[rgba(31,41,51,0.08)] bg-white">
         <button
           onClick={onApplySearch}
           disabled={isFilterBusy}
@@ -301,13 +296,9 @@ export default function MobileFilterModal({
           {isFilterBusy ? (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : null}
-          {isFilterBusy
-            ? "搜索中..."
-            : hasPendingFilters
-              ? "应用筛选"
-              : "搜索"}
+          {isFilterBusy ? "搜索中..." : hasPendingFilters ? "应用筛选" : "搜索"}
         </button>
       </div>
-    </SideSheet>
+    </FullScreenSheet>
   );
 }

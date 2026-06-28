@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAuthStore } from "@/store/useAuthStore";
-import { ChatListSkeleton } from "@/components/motion/Skeleton";
 import {
   collection,
   query,
@@ -131,7 +130,7 @@ export default function MessagesPage() {
         className={`flex-1 max-w-[800px] w-full mx-auto ${isManageMode ? "pb-28 md:pb-24" : ""}`}
       >
         {loading ? (
-          <ChatListSkeleton />
+          <PageLoading label="加载消息..." />
         ) : (
           chats.map((chat) => (
             <div

@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import { useApp } from "@/components/app/AppContext";
 import FadeModal from "@/components/motion/FadeModal";
+import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
 
 type FormErrors = {
   contact?: string;
@@ -232,20 +233,10 @@ export default function SellerOnboardingPage() {
                   />
                 </div>
                 {errors.contact && (
-                  <p className="text-[13px] text-rose-500 leading-relaxed flex items-start gap-1.5 px-1">
-                    <svg
-                      className="w-4 h-4 shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                  <p
+                    role="alert"
+                    className={`${inlineFeedback} ${FEEDBACK.error.text} px-1`}
+                  >
                     {errors.contact}
                   </p>
                 )}
@@ -304,7 +295,7 @@ export default function SellerOnboardingPage() {
               <label
                 className={`flex items-start gap-3 cursor-pointer group rounded-[16px] p-3 -mx-1 transition-colors ${
                   errors.agreement
-                    ? "bg-rose-50/60 ring-1 ring-rose-200"
+                    ? `${FEEDBACK.error.bgSoft} ring-1 ${FEEDBACK.error.ring}`
                     : "hover:bg-white/50"
                 }`}
               >
@@ -354,20 +345,10 @@ export default function SellerOnboardingPage() {
                 </div>
               </label>
               {errors.agreement && (
-                <p className="text-[13px] text-rose-500 leading-relaxed flex items-start gap-1.5 px-2 mt-1">
-                  <svg
-                    className="w-4 h-4 shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                <p
+                  role="alert"
+                  className={`${inlineFeedback} ${FEEDBACK.error.text} px-2 mt-1`}
+                >
                   {errors.agreement}
                 </p>
               )}
