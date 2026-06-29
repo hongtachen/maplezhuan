@@ -108,7 +108,7 @@ export default function AppSidebar() {
   const unreadCount = useUnreadMessages();
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 w-16 flex-col items-center bg-white border-r border-[rgba(31,41,51,0.08)] py-4 gap-1">
+    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 w-16 flex-col items-center overflow-hidden bg-white border-r border-[rgba(31,41,51,0.08)] py-4 gap-1">
       {/* Logo */}
       <Link
         href="/"
@@ -147,7 +147,7 @@ export default function AppSidebar() {
               key={item.href}
               href={item.href}
               title={item.label}
-              className={`w-full flex flex-col items-center gap-0.5 py-2.5 rounded-xl mx-1 transition-colors ${
+              className={`w-14 flex flex-col items-center gap-0.5 py-2.5 rounded-xl transition-colors ${
                 active
                   ? "bg-[#f3fbf7] text-[#2f9e6d]"
                   : "text-[#5a6b73] hover:bg-[rgba(47,158,109,0.06)]"
@@ -176,6 +176,37 @@ export default function AppSidebar() {
           );
         })}
       </nav>
+
+      <div className="w-full border-t border-[rgba(31,41,51,0.08)] pt-2 shrink-0 flex justify-center">
+        <Link
+          href="/about"
+          title="枫转故事"
+          className={`w-14 flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors ${
+            pathname === "/about"
+              ? "bg-[#f3fbf7] text-[#2f9e6d]"
+              : "text-[#5a6b73] hover:bg-[rgba(47,158,109,0.06)]"
+          }`}
+        >
+          <svg
+            className={`w-5 h-5 ${pathname === "/about" ? "text-[#2f9e6d]" : "text-[#5a6b73]"}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={pathname === "/about" ? 2.2 : 1.8}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+            />
+          </svg>
+          <span
+            className={`text-[9px] font-medium ${pathname === "/about" ? "text-[#2f9e6d]" : "text-[#5a6b73]"}`}
+          >
+            故事
+          </span>
+        </Link>
+      </div>
     </aside>
   );
 }

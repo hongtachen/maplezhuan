@@ -20,18 +20,22 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const isSellerOnboarding = pathname === "/seller-onboarding";
   const isPublishInner =
     pathname.startsWith("/publish/") && pathname !== "/publish";
+  const isAbout = pathname === "/about";
   const hideBottomNav =
     isChatRoom ||
     isListingDetail ||
     isProfileInner ||
     isSellerOnboarding ||
     isPublishInner;
+  const hideAppChrome = isAbout;
 
   return (
     <AppProvider>
-      <AppSidebar />
+      {!hideAppChrome && <AppSidebar />}
 
-      <div className="min-h-dvh flex flex-col md:pl-16">
+      <div
+        className={`min-h-dvh flex flex-col ${hideAppChrome ? "" : "md:pl-16"}`}
+      >
         <main
           className={`overflow-x-clip ${hideBottomNav ? "" : "pb-20 md:pb-0"}`}
         >
