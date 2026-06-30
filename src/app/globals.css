@@ -64,6 +64,10 @@ body {
   color: var(--color-text);
 }
 
+@utility pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
 /* View Transitions API — listing card → detail hero (Chrome / Safari 18+) */
 ::view-transition-old(root),
 ::view-transition-new(root) {

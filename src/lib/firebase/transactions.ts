@@ -144,10 +144,13 @@ export async function confirmSold(params: {
   seller: SellerInfo;
   chatId: string;
   listing: ListingInfo;
+  finalPrice?: number;
 }): Promise<void> {
-  const { itemId, itemType, buyer, seller, chatId, listing } = params;
+  const { itemId, itemType, buyer, seller, chatId, listing, finalPrice } =
+    params;
   const colName = itemType === "item" ? "items" : "sublets";
   const newStatus = itemType === "item" ? "已售出" : "已租出";
+  const salePrice = finalPrice ?? listing.price;
 
   await updateDocument(colName, itemId, {
     status: newStatus,
@@ -159,7 +162,7 @@ export async function confirmSold(params: {
   await addDoc(collection(db, "orders"), {
     itemId,
     itemTitle: listing.title,
-    itemPrice: listing.price,
+    itemPrice: salePrice,
     itemEmoji: listing.emoji,
     itemGradientFrom: listing.gradientFrom,
     itemGradientTo: listing.gradientTo,
@@ -188,6 +191,50 @@ export async function confirmSold(params: {
      <p>如果您喜欢本次交易，请给卖家一个评价！</p>
      <p>或者您有什么建议也可以告诉我们，这能帮助我们改进平台来给大家提供更好的服务，感谢!</p>`,
   );
+}
+
+export async function acceptBargain(params: {
+  itemId: string;
+  itemType: ItemType;
+  buyer: BuyerInfo;
+  seller: SellerInfo;
+  chatId: string;
+  listing: ListingInfo;
+  finalPrice: number;
+}): Promise<void> {
+  await confirmSold({ ...params, finalPrice: params.finalPrice });
+}
+
+export async function declineBargain(params: {
+  chatId: string;
+  declinerId: string;
+  recipientId: string;
+  itemTitle: string;
+}): Promise<void> {
+  const { chatId, declinerId, recipientId, itemTitle } = params;
+  const text = "对方未能接受您的议价，如有疑问请继续沟通。";
+
+  await postChatMessage(
+    chatId,
+    declinerId,
+    text,
+    "action_declined",
+    recipientId,
+  );
+
+  const recipientProfile = await getUserProfile(recipientId);
+  if (
+    recipientProfile?.email &&
+    recipientProfile.emailNotifications !== false
+  ) {
+    await sendTransactionEmail(
+      recipientProfile.email,
+      `【枫转】议价未被接受`,
+      `<p>您好，${recipientProfile.nickname || "用户"}：</p>
+       <p>对方未能接受您对 <b>${itemTitle}</b> 的议价。</p>
+       <p>您可以在枫转继续沟通或浏览其他信息。</p>`,
+    );
+  }
 }
 
 export async function declineRequest(params: {

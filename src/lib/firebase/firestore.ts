@@ -157,6 +157,7 @@ export type MessageType =
   | "text"
   | "request_reserve"
   | "request_buy"
+  | "bargain_offer"
   | "action_reserved"
   | "action_sold"
   | "action_declined"
@@ -174,6 +175,7 @@ export type MessageMetadata = {
   requestMessageId?: string;
   pickupConfirmed?: boolean;
   pickupConfirmedBy?: string;
+  offerPrice?: number;
 };
 
 export type MessageDocument = {

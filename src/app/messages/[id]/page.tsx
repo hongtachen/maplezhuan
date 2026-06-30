@@ -27,12 +27,16 @@ import {
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
 import {
   acceptReserve,
+  acceptBargain,
   confirmSold,
   declineRequest,
+  declineBargain,
   buyerFromProfile,
   listingFromItem,
   ItemType,
 } from "@/lib/firebase/transactions";
+import { sendBargainCounterOffer } from "@/lib/firebase/bargainChat";
+import BargainPriceModal from "@/components/chat/BargainPriceModal";
 import { uploadImage } from "@/lib/firebase/storage";
 import { submitReview } from "@/lib/firebase/reviews";
 import ChatItemBar from "@/components/chat/ChatItemBar";
@@ -88,9 +92,12 @@ export default function ChatPage() {
   const [reviewText, setReviewText] = useState("");
   const [acting, setActing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showCounterModal, setShowCounterModal] = useState(false);
+  const [counterSubmitting, setCounterSubmitting] = useState(false);
 
   const isSeller = !!(user && item && item.sellerId === user.uid);
   const canActOnRequests = isSeller && isItemActive(item?.status);
+  const canActOnBargain = isItemActive(item?.status);
 
   const resolvedRequestIds = useMemo(() => {
     const resolved = new Set<string>();
@@ -106,11 +113,25 @@ export default function ChatPage() {
     if (lastActionIdx >= 0) {
       for (let i = 0; i < lastActionIdx; i++) {
         const m = messages[i];
-        if (m.msgType === "request_reserve" || m.msgType === "request_buy") {
+        if (
+          m.msgType === "request_reserve" ||
+          m.msgType === "request_buy" ||
+          m.msgType === "bargain_offer"
+        ) {
           if (m.id) resolved.add(m.id);
         }
       }
     }
+
+    const bargainIndices: number[] = [];
+    messages.forEach((m, i) => {
+      if (m.msgType === "bargain_offer") bargainIndices.push(i);
+    });
+    for (let i = 0; i < bargainIndices.length - 1; i++) {
+      const m = messages[bargainIndices[i]];
+      if (m.id) resolved.add(m.id);
+    }
+
     return resolved;
   }, [messages]);
 
@@ -323,6 +344,100 @@ export default function ChatPage() {
     }
   };
 
+  const handleAcceptBargain = async (offerPrice: number) => {
+    if (!user || !chat || !item || !itemType || !otherUser) return;
+    setActing(true);
+    try {
+      const buyerProfile = isSeller
+        ? otherUser
+        : await getUserProfile(user.uid);
+      const sellerProfile = isSeller
+        ? await getUserProfile(user.uid)
+        : await getUserProfile(item.sellerId);
+
+      if (!buyerProfile || !sellerProfile) {
+        showToast("用户信息不完整", "error");
+        return;
+      }
+
+      const buyerInfo = buyerFromProfile(isSeller ? otherUser : buyerProfile);
+      const sellerInfo = {
+        uid: item.sellerId,
+        nickname: sellerProfile.nickname || "卖家",
+        avatar:
+          sellerProfile.avatarUrl ||
+          (sellerProfile.nickname
+            ? sellerProfile.nickname.charAt(0).toUpperCase()
+            : "S"),
+      };
+      const listing = listingFromItem(item, itemType);
+
+      await acceptBargain({
+        itemId: item.id!,
+        itemType,
+        buyer: buyerInfo,
+        seller: sellerInfo,
+        chatId,
+        listing,
+        finalPrice: offerPrice,
+      });
+      showToast(itemType === "sublet" ? "已确认租出" : "已确认售出", "success");
+    } catch (e) {
+      console.error(e);
+      showToast("操作失败", "error");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleDeclineBargain = async () => {
+    if (!user || !chat || !item || !otherUser) return;
+    setActing(true);
+    try {
+      const otherUserId =
+        chat.participants.find((p) => p !== user.uid) || chat.participants[0];
+      const title =
+        itemType === "item"
+          ? (item as ItemDocument).title
+          : (item as SubletDocument).title || (item as SubletDocument).address;
+      await declineBargain({
+        chatId,
+        declinerId: user.uid,
+        recipientId: otherUserId,
+        itemTitle: title,
+      });
+      showToast("已拒绝议价", "info");
+    } catch (e) {
+      console.error(e);
+      showToast("操作失败", "error");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleCounterBargainSubmit = async (offerPrice: number) => {
+    if (!user || !chat || !itemType || !otherUser) return;
+    setCounterSubmitting(true);
+    try {
+      const otherUserId =
+        chat.participants.find((p) => p !== user.uid) || chat.participants[0];
+      await sendBargainCounterOffer({
+        chatId,
+        senderId: user.uid,
+        recipientId: otherUserId,
+        offerPrice,
+        itemType,
+      });
+      setShowCounterModal(false);
+      showToast("还价已发送", "success");
+    } catch (e) {
+      console.error(e);
+      showToast("发送失败", "error");
+    } finally {
+      setCounterSubmitting(false);
+    }
+  };
+
   const handleSendImage = async (files: FileList) => {
     if (!user || !chat) return;
     const otherUserId =
@@ -524,6 +639,10 @@ export default function ChatPage() {
                     onAcceptReserve={handleAcceptReserve}
                     onConfirmSold={handleConfirmSold}
                     onDecline={handleDecline}
+                    onAcceptBargain={handleAcceptBargain}
+                    onCounterBargain={() => setShowCounterModal(true)}
+                    onDeclineBargain={handleDeclineBargain}
+                    canActOnBargain={canActOnBargain}
                     onReview={() => setShowReviewModal(true)}
                     onConfirmPickup={handleConfirmPickup}
                     onCopy={(label) =>
@@ -584,6 +703,17 @@ export default function ChatPage() {
         canSchedulePickup={canSchedulePickup}
         uploading={uploading}
       />
+
+      {item && itemType && (
+        <BargainPriceModal
+          open={showCounterModal}
+          onClose={() => setShowCounterModal(false)}
+          onSubmit={handleCounterBargainSubmit}
+          itemType={itemType}
+          listPrice={item.price}
+          loading={counterSubmitting}
+        />
+      )}
 
       <FadeModal
         open={showReviewModal && !!(item && otherUser)}

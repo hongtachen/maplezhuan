@@ -5,6 +5,7 @@ import { MessageDocument } from "@/lib/firebase/firestore";
 import ImageLightbox from "@/components/ui/ImageLightbox";
 import TransactionRequestCard from "./TransactionRequestCard";
 import TransactionStatusCard from "./TransactionStatusCard";
+import BargainOfferCard from "./BargainOfferCard";
 
 type Props = {
   msg: MessageDocument;
@@ -16,6 +17,10 @@ type Props = {
   onAcceptReserve: () => void;
   onConfirmSold: () => void;
   onDecline: () => void;
+  onAcceptBargain?: (offerPrice: number) => void;
+  onCounterBargain?: () => void;
+  onDeclineBargain?: () => void;
+  canActOnBargain?: boolean;
   onReview?: () => void;
   onConfirmPickup?: (msgId: string) => void;
   onCopy?: (label: string) => void;
@@ -89,6 +94,10 @@ export default function MessageBubble({
   onAcceptReserve,
   onConfirmSold,
   onDecline,
+  onAcceptBargain,
+  onCounterBargain,
+  onDeclineBargain,
+  canActOnBargain = true,
   onReview,
   onConfirmPickup,
   onCopy,
@@ -112,6 +121,25 @@ export default function MessageBubble({
           onAcceptReserve={onAcceptReserve}
           onConfirmSold={onConfirmSold}
           onDecline={onDecline}
+          acting={acting}
+        />
+      </div>
+    );
+  }
+
+  if (msg.msgType === "bargain_offer") {
+    return (
+      <div className="flex flex-col max-w-[85%] md:max-w-[75%] self-start items-start">
+        <span className="text-[10px] text-[#5a6b73] px-1">{timeStr}</span>
+        <BargainOfferCard
+          msg={msg}
+          isMe={isMe}
+          isSeller={isSeller}
+          itemType={itemType}
+          isResolved={isRequestResolved || !canActOnBargain}
+          onAccept={(price) => onAcceptBargain?.(price)}
+          onCounter={() => onCounterBargain?.()}
+          onDecline={() => onDeclineBargain?.()}
           acting={acting}
         />
       </div>
