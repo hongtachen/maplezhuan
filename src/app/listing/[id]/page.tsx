@@ -650,7 +650,7 @@ export default function ListingDetailPage() {
                 onClick={() => router.push("/profile/listings")}
                 className="w-full bg-gray-100 hover:bg-gray-200 text-[#5a6b73] font-medium py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors"
               >
-                管理我的发布
+                管理发布
               </button>
             )}
           </div>

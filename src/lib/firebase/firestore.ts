@@ -104,7 +104,7 @@ export type OrderDocument = {
   sellerId: string;
   sellerName: string;
   sellerAvatar: string;
-  status: "已完成" | "已评价" | "进行中";
+  status: "已完成" | "已评价" | "进行中" | "已取消";
   createdAt: FirestoreReadTimestamp;
   completedAt?: FirestoreReadTimestamp;
 };

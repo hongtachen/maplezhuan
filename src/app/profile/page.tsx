@@ -11,8 +11,8 @@ const txRows = [
   {
     key: "listings",
     href: "/profile/listings",
-    label: "我发布的",
-    desc: "管理在售、已预留和已售商品",
+    label: "历史记录",
+    desc: "管理在售、预留与成交记录",
     icon: (
       <svg
         className="w-6 h-6 text-[#2f9e6d]"
@@ -29,29 +29,7 @@ const txRows = [
       </svg>
     ),
     countKey: "listingsActive" as const,
-    countSuffix: "件在售",
-  },
-  {
-    key: "sold",
-    href: "/profile/sold",
-    label: "我卖出的",
-    desc: "查看成交记录与买家",
-    icon: (
-      <svg
-        className="w-6 h-6 text-[#2f9e6d]"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-        <line x1="7" y1="7" x2="7.01" y2="7"></line>
-      </svg>
-    ),
-    countKey: "sold" as const,
-    countSuffix: "笔成交",
+    countSuffix: "条进行中",
   },
   {
     key: "bought",
@@ -231,12 +209,11 @@ export default function ProfilePage() {
         <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-[rgba(31,41,51,0.04)]">
           <div className="px-6 py-4 border-b border-[rgba(31,41,51,0.04)] bg-gray-50/50 flex items-center justify-between">
             <h3 className="text-sm font-bold text-[#5a6b73]">交易中心</h3>
-            {!txCounts.loading &&
-              (txCounts.sold > 0 || txCounts.bought > 0) && (
-                <span className="text-[11px] text-[#5a6b73]">
-                  共有 {txCounts.sold + txCounts.bought} 笔交易
-                </span>
-              )}
+            {!txCounts.loading && txCounts.bought > 0 && (
+              <span className="text-[11px] text-[#5a6b73]">
+                共有 {txCounts.bought} 笔购买
+              </span>
+            )}
           </div>
           <div className="flex flex-col">
             {txRows.map((row, idx) => {
@@ -336,7 +313,7 @@ export default function ProfilePage() {
               className="flex items-center justify-between px-6 py-4 hover:bg-[#f3fbf7] transition-colors"
             >
               <span className="text-[#1f2933] font-medium text-[15px]">
-                浏览记录
+                最近浏览
               </span>
               <svg
                 className="w-4 h-4 text-[#5a6b73]"

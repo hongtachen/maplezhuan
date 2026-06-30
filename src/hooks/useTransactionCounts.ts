@@ -61,8 +61,9 @@ export function useTransactionCounts(): TransactionCounts {
           listingsActive: activeListings.length,
           sold: soldOrders.length,
           bought: boughtOrders.length,
-          pendingReviews: boughtOrders.filter((o) => o.status !== "已评价")
-            .length,
+          pendingReviews: boughtOrders.filter(
+            (o) => o.status !== "已评价" && o.status !== "已取消",
+          ).length,
         });
       } catch (e) {
         console.error("Failed to fetch transaction counts", e);

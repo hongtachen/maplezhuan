@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -20,6 +21,13 @@ import {
 } from "@/lib/listingStatus";
 
 export type ItemType = "item" | "sublet";
+
+/** Remove buyer fields from a listing when relisting or marking without a buyer. */
+export const LISTING_BUYER_FIELD_CLEARS = {
+  buyerId: deleteField(),
+  buyerName: deleteField(),
+  buyerAvatar: deleteField(),
+};
 
 export type BuyerInfo = {
   uid: string;
@@ -266,6 +274,115 @@ export async function declineRequest(params: {
   );
 }
 
+/** Notify buyer when seller relists after reserve/sale. */
+export async function cancelOrdersForRelistedListing(params: {
+  itemId: string;
+  buyerId: string;
+  sellerId: string;
+  itemTitle: string;
+  itemType: ItemType;
+}): Promise<void> {
+  const { itemId, buyerId, sellerId, itemTitle, itemType } = params;
+
+  const snap = await getDocs(
+    query(collection(db, "orders"), where("itemId", "==", itemId)),
+  );
+
+  const cancelText =
+    itemType === "sublet"
+      ? "卖家已将此转租重新上架，本次交易已取消。"
+      : "卖家已将此商品重新上架，本次交易已取消。";
+
+  let cancelledAny = false;
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data();
+    if (data.buyerId !== buyerId || data.status === "已取消") continue;
+    await updateDocument("orders", docSnap.id, { status: "已取消" });
+    cancelledAny = true;
+  }
+
+  const chatId = await findChatByItemAndUsers(itemId, sellerId, buyerId);
+  if (chatId) {
+    await postChatMessage(chatId, sellerId, cancelText, "text", buyerId);
+  }
+
+  if (cancelledAny) {
+    const profile = await getUserProfile(buyerId);
+    if (profile?.email) {
+      await notifyBuyerByEmail(
+        buyerFromProfile(profile),
+        `【枫转】交易已取消 — ${itemTitle}`,
+        `<p>您好，${profile.nickname || "买家"}：</p>
+         <p>卖家已将 <b>${itemTitle}</b> 重新上架，您之前的成交记录已标记为<b>已取消</b>。</p>
+         <p>如有疑问，可通过站内私信联系卖家。</p>`,
+      );
+    }
+  }
+}
+
+/** Return listing to on-sale and notify/cancel prior buyer transactions. */
+export async function relistListing(params: {
+  itemId: string;
+  itemType: ItemType;
+  previousBuyerId?: string;
+  previousStatus: ListingUiStatus;
+  sellerId: string;
+  itemTitle: string;
+}): Promise<void> {
+  const {
+    itemId,
+    itemType,
+    previousBuyerId,
+    previousStatus,
+    sellerId,
+    itemTitle,
+  } = params;
+  const colName = itemType === "item" ? "items" : "sublets";
+  const newStatus =
+    itemType === "sublet"
+      ? uiStatusToSubletDb("在售")
+      : uiStatusToItemDb("在售");
+
+  await updateDocument(colName, itemId, {
+    status: newStatus,
+    ...LISTING_BUYER_FIELD_CLEARS,
+  });
+
+  if (!previousBuyerId) return;
+
+  if (previousStatus === "已售") {
+    await cancelOrdersForRelistedListing({
+      itemId,
+      buyerId: previousBuyerId,
+      sellerId,
+      itemTitle,
+      itemType,
+    });
+    return;
+  }
+
+  if (previousStatus === "已预留") {
+    const chatId = await findChatByItemAndUsers(
+      itemId,
+      sellerId,
+      previousBuyerId,
+    );
+    const reserveText =
+      itemType === "sublet"
+        ? "卖家已将此转租重新上架，预留已取消。"
+        : "卖家已将此商品重新上架，预留已取消。";
+    if (chatId) {
+      await postChatMessage(
+        chatId,
+        sellerId,
+        reserveText,
+        "text",
+        previousBuyerId,
+      );
+    }
+  }
+}
+
 /** Used by profile/listings when changing status with buyer picker */
 export async function changeListingStatus(params: {
   itemId: string;
@@ -288,6 +405,8 @@ export async function changeListingStatus(params: {
     updates.buyerId = buyer.uid;
     updates.buyerName = buyer.nickname;
     updates.buyerAvatar = buyer.avatar;
+  } else if (uiStatus === "已售" || uiStatus === "已预留") {
+    Object.assign(updates, LISTING_BUYER_FIELD_CLEARS);
   }
 
   await updateDocument(colName, itemId, updates);

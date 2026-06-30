@@ -34,6 +34,7 @@ export type MyListing = {
   image?: string;
   buyerName?: string;
   buyerAvatar?: string;
+  buyerId?: string;
 };
 
 export function useMyListings() {
@@ -77,6 +78,7 @@ export function useMyListings() {
             image: i.images?.[0],
             buyerName: i.buyerName,
             buyerAvatar: i.buyerAvatar,
+            buyerId: i.buyerId,
             _sortTime:
               i.createdAt && "seconds" in i.createdAt ? i.createdAt.seconds : 0,
           }),
@@ -105,6 +107,7 @@ export function useMyListings() {
             image: s.images?.[0],
             buyerName: s.buyerName,
             buyerAvatar: s.buyerAvatar,
+            buyerId: s.buyerId,
             _sortTime:
               s.createdAt && "seconds" in s.createdAt ? s.createdAt.seconds : 0,
           }));

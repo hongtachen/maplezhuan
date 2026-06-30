@@ -1,4 +1,4 @@
-/** Unified UI status for 我发布的 (items + sublets share the same tabs). */
+/** Unified UI status for seller history page (items + sublets share the same tabs). */
 export type ListingUiStatus = "在售" | "已预留" | "已售";
 
 export type ListingKind = "item" | "sublet";
@@ -68,4 +68,41 @@ export function getBuyerActionLabel(
 
 export function getListingKindLabel(kind: ListingKind): string {
   return kind === "sublet" ? "转租" : "闲置";
+}
+
+/** Tab label on seller history page (已售 → 已成交). */
+export function getUiStatusTabLabel(status: ListingUiStatus): string {
+  if (status === "已售") return "已成交";
+  return status;
+}
+
+export type SellerHistoryTab = "active" | "reserved" | "completed";
+
+export const TAB_TO_UI_STATUS: Record<SellerHistoryTab, ListingUiStatus> = {
+  active: "在售",
+  reserved: "已预留",
+  completed: "已售",
+};
+
+export const UI_STATUS_TO_TAB: Record<ListingUiStatus, SellerHistoryTab> = {
+  在售: "active",
+  已预留: "reserved",
+  已售: "completed",
+};
+
+export function parseHistoryTab(
+  tab: string | null | undefined,
+): SellerHistoryTab {
+  if (tab === "reserved" || tab === "completed") return tab;
+  return "active";
+}
+
+/** Seller-side label for buyer review status on completed deals. */
+export function getOrderReviewLabel(
+  orderStatus?: "已完成" | "已评价" | "进行中" | "已取消",
+): string | null {
+  if (!orderStatus || orderStatus === "已取消") return null;
+  if (orderStatus === "已评价") return "买家已评价";
+  if (orderStatus === "已完成") return "待买家评价";
+  return null;
 }

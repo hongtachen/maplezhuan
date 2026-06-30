@@ -58,7 +58,7 @@ export default function HistoryPage() {
               />
             </svg>
           </button>
-          <span className="font-bold text-[#1f2933]">浏览记录</span>
+          <span className="font-bold text-[#1f2933]">最近浏览</span>
           <button
             onClick={clearAll}
             className="text-[13px] font-medium text-rose-500 hover:text-rose-600 transition-colors"
