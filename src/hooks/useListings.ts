@@ -23,7 +23,10 @@ function useListings<T extends { status: string }>(
         const results = await fetchFn();
         setData(
           activeStatus
-            ? results.filter((item) => item.status === activeStatus)
+            ? results.filter(
+                (item) =>
+                  item.status === activeStatus || item.status === "已预留",
+              )
             : results,
         );
       } catch (error) {
