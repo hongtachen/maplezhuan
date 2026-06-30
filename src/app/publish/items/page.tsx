@@ -11,6 +11,20 @@ import { useApp } from "@/components/app/AppContext";
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+
+function isPriceFilled(price: number | "" | undefined): boolean {
+  return (
+    price !== "" &&
+    price !== undefined &&
+    !Number.isNaN(Number(price)) &&
+    Number(price) >= 0
+  );
+}
+
+function formatPriceInputValue(price: number | "" | undefined): string {
+  return price === "" || price === undefined ? "" : String(price);
+}
 
 export default function ItemPublishPage() {
   const router = useRouter();
@@ -19,6 +33,7 @@ export default function ItemPublishPage() {
   const { showToast } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showFreeConfirm, setShowFreeConfirm] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [locationMode, setLocationMode] = useState<"default" | "custom">(
     "default",
@@ -52,7 +67,7 @@ export default function ItemPublishPage() {
 
     if (
       !itemData.title ||
-      !itemData.price ||
+      !isPriceFilled(itemData.price) ||
       !itemData.category ||
       !finalLocationData?.text ||
       !itemData.images ||
@@ -66,6 +81,18 @@ export default function ItemPublishPage() {
       showToast("请先登录", "error");
       return;
     }
+
+    if (Number(itemData.price) === 0) {
+      setShowFreeConfirm(true);
+      return;
+    }
+
+    if (!finalLocationData) return;
+    await publishItem(finalLocationData);
+  };
+
+  const publishItem = async (finalLocationData: LocationData) => {
+    if (!user) return;
 
     try {
       setIsSubmitting(true);
@@ -88,7 +115,7 @@ export default function ItemPublishPage() {
       // Save to firestore
       await addItem({
         title: itemData.title,
-        price: itemData.price,
+        price: itemData.price as number,
         description: itemData.description,
         category: itemData.category,
         condition: itemData.condition,
@@ -111,6 +138,21 @@ export default function ItemPublishPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleConfirmFreePublish = async () => {
+    let finalLocationData = null;
+    if (locationMode === "default" && userProfile?.defaultAddress) {
+      finalLocationData = userProfile.defaultAddress;
+    } else if (locationMode === "custom" && customLocation) {
+      finalLocationData = customLocation;
+    }
+    if (!finalLocationData?.text) {
+      showToast("请填写所有必填信息并上传至少2张照片", "error");
+      return;
+    }
+    setShowFreeConfirm(false);
+    await publishItem(finalLocationData);
   };
 
   const categories = [
@@ -188,9 +230,13 @@ export default function ItemPublishPage() {
                   </label>
                   <input
                     type="number"
-                    value={itemData.price || ""}
+                    min={0}
+                    value={formatPriceInputValue(itemData.price)}
                     onChange={(e) =>
-                      setItemData({ price: Number(e.target.value) })
+                      setItemData({
+                        price:
+                          e.target.value === "" ? "" : Number(e.target.value),
+                      })
                     }
                     placeholder="0"
                     className="w-full px-4 py-3 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d] outline-none transition-all text-[15px] placeholder:text-[#a0aeb5]"
@@ -346,7 +392,7 @@ export default function ItemPublishPage() {
             {(() => {
               const isComplete = Boolean(
                 itemData.title &&
-                itemData.price &&
+                isPriceFilled(itemData.price) &&
                 itemData.category &&
                 itemData.images &&
                 itemData.images.length >= 2 &&
@@ -374,6 +420,15 @@ export default function ItemPublishPage() {
       <PublishSuccessOverlay
         open={showSuccess}
         onComplete={handlePublishSuccessComplete}
+      />
+      <ConfirmDialog
+        open={showFreeConfirm}
+        onClose={() => setShowFreeConfirm(false)}
+        onConfirm={handleConfirmFreePublish}
+        title="确认免费赠送？"
+        description="价格为 $0 表示免费赠送，确定继续发布吗？"
+        confirmLabel="确认发布"
+        loading={isSubmitting}
       />
     </div>
   );

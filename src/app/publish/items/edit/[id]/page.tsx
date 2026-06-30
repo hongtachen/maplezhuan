@@ -12,6 +12,16 @@ import { useApp } from "@/components/app/AppContext";
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import { ItemDocument } from "@/lib/firebase/firestore";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+
+function isPriceFilled(price: number | "" | undefined): boolean {
+  return (
+    price !== "" &&
+    price !== undefined &&
+    !Number.isNaN(Number(price)) &&
+    Number(price) >= 0
+  );
+}
 
 export default function ItemEditPage() {
   const router = useRouter();
@@ -22,6 +32,7 @@ export default function ItemEditPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFreeConfirm, setShowFreeConfirm] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   const [title, setTitle] = useState("");
@@ -93,7 +104,12 @@ export default function ItemEditPage() {
       finalLocationData = customLocation;
     }
 
-    if (!title || !price || !category || !finalLocationData?.text) {
+    if (
+      !title ||
+      !isPriceFilled(price) ||
+      !category ||
+      !finalLocationData?.text
+    ) {
       showToast("除了商品描述外，请填写所有必填信息", "error");
       return;
     }
@@ -102,6 +118,17 @@ export default function ItemEditPage() {
       showToast("请先登录", "error");
       return;
     }
+
+    if (Number(price) === 0) {
+      setShowFreeConfirm(true);
+      return;
+    }
+
+    await saveItem(finalLocationData);
+  };
+
+  const saveItem = async (finalLocationData: LocationData) => {
+    if (!user) return;
 
     try {
       setIsSubmitting(true);
@@ -140,6 +167,18 @@ export default function ItemEditPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleConfirmFreeSave = async () => {
+    let finalLocationData = null;
+    if (locationMode === "default" && userProfile?.defaultAddress) {
+      finalLocationData = userProfile.defaultAddress;
+    } else if (locationMode === "custom" && customLocation) {
+      finalLocationData = customLocation;
+    }
+    if (!finalLocationData) return;
+    setShowFreeConfirm(false);
+    await saveItem(finalLocationData);
   };
 
   const categories = [
@@ -366,7 +405,7 @@ export default function ItemEditPage() {
             {(() => {
               const isComplete = Boolean(
                 title &&
-                price !== "" &&
+                isPriceFilled(price) &&
                 category &&
                 images.length >= 2 &&
                 (locationMode === "default"
@@ -390,6 +429,15 @@ export default function ItemEditPage() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={showFreeConfirm}
+        onClose={() => setShowFreeConfirm(false)}
+        onConfirm={handleConfirmFreeSave}
+        title="确认免费赠送？"
+        description="价格为 $0 表示免费赠送，确定继续保存吗？"
+        confirmLabel="确认保存"
+        loading={isSubmitting}
+      />
     </div>
   );
 }
