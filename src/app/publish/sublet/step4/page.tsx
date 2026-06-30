@@ -58,11 +58,15 @@ export default function SubletStep4Page() {
       }
 
       // Save to firestore
+      const resolvedRoomTypes = subletData.roomTypes?.includes("other")
+        ? [subletData.customRoomType?.trim() || ""].filter(Boolean)
+        : subletData.roomTypes || [];
+
       await addSublet({
         title: subletData.title || "",
         propertyType: subletData.propertyType || "",
         spaceType: subletData.spaceType || "",
-        roomTypes: subletData.roomTypes || [],
+        roomTypes: resolvedRoomTypes,
         leaseTerms: subletData.leaseTerms || [],
         moveInDate: subletData.moveInDate || "",
         ...(subletData.renewable !== undefined && {
@@ -316,22 +320,6 @@ export default function SubletStep4Page() {
             >
               {isSubmitting ? "发布中..." : "发布房源"}
             </button>
-            <p className="text-center text-[10px] text-[#5a6b73] flex items-center justify-center gap-1">
-              <svg
-                className="w-3 h-3 text-[#2f9e6d]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              发布后 24 小时内完成审核
-            </p>
           </div>
         </div>
       </div>

@@ -12,6 +12,16 @@ import { useApp } from "@/components/app/AppContext";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import { SubletDocument } from "@/lib/firebase/firestore";
 
+const KNOWN_ROOM_TYPE_IDS = new Set([
+  "studio",
+  "1b1b",
+  "2b2b",
+  "ensuite",
+  "shared",
+  "room",
+  "other",
+]);
+
 export default function SubletEditPage() {
   const router = useRouter();
   const params = useParams();
@@ -30,6 +40,7 @@ export default function SubletEditPage() {
   const [unit, setUnit] = useState("");
   const [hideAddress, setHideAddress] = useState(false);
   const [roomTypes, setRoomTypes] = useState<string[]>([]);
+  const [customRoomType, setCustomRoomType] = useState("");
   const [leaseTerms, setLeaseTerms] = useState<string[]>([]);
   const [moveInDate, setMoveInDate] = useState("");
   const [images, setImages] = useState<(string | File)[]>([]);
@@ -69,7 +80,14 @@ export default function SubletEditPage() {
           setAddress(data.address || "");
           setUnit(data.unit || "");
           setHideAddress(data.hideAddress || false);
-          setRoomTypes(data.roomTypes || []);
+          const savedRoomType = data.roomTypes?.[0];
+          if (savedRoomType && !KNOWN_ROOM_TYPE_IDS.has(savedRoomType)) {
+            setRoomTypes(["other"]);
+            setCustomRoomType(savedRoomType);
+          } else {
+            setRoomTypes(data.roomTypes || []);
+            setCustomRoomType("");
+          }
           setLeaseTerms(data.leaseTerms || []);
           setMoveInDate(data.moveInDate || "");
           setImages(data.images || []);
@@ -110,6 +128,10 @@ export default function SubletEditPage() {
       showToast("请填写房型、租期和入住时间", "error");
       return;
     }
+    if (roomTypes.includes("other") && !customRoomType.trim()) {
+      showToast("请填写自定义房型", "error");
+      return;
+    }
     if (!price || (!contactPhone && !contactWechat)) {
       showToast("请填写价格并提供至少一种联系方式", "error");
       return;
@@ -140,7 +162,9 @@ export default function SubletEditPage() {
         locationData,
         unit,
         hideAddress,
-        roomTypes,
+        roomTypes: roomTypes.includes("other")
+          ? [customRoomType.trim()]
+          : roomTypes,
         leaseTerms,
         moveInDate,
         images: uploadedImageUrls,
@@ -368,13 +392,29 @@ export default function SubletEditPage() {
                     ].map((rt) => (
                       <button
                         key={rt.id}
-                        onClick={() => setRoomTypes([rt.id])}
+                        onClick={() => {
+                          if (rt.id === "other") {
+                            setRoomTypes(["other"]);
+                          } else {
+                            setRoomTypes([rt.id]);
+                            setCustomRoomType("");
+                          }
+                        }}
                         className={`px-4 py-2 rounded-full text-sm font-medium border ${roomTypes.includes(rt.id) ? "border-[#2f9e6d] bg-[#f3fbf7] text-[#2f9e6d]" : "border-[rgba(31,41,51,0.12)] text-[#5a6b73]"} transition-colors`}
                       >
                         {rt.title}
                       </button>
                     ))}
                   </div>
+                  {roomTypes.includes("other") && (
+                    <input
+                      type="text"
+                      value={customRoomType}
+                      onChange={(e) => setCustomRoomType(e.target.value)}
+                      placeholder="例如：主卧合租、地下室单间、客厅隔间"
+                      className="w-full mt-3 px-4 py-3 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] outline-none transition-all text-[15px]"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-[#1f2933] mb-2">
@@ -600,6 +640,7 @@ export default function SubletEditPage() {
                 address &&
                 locationData?.text &&
                 roomTypes.length &&
+                (!roomTypes.includes("other") || customRoomType.trim()) &&
                 leaseTerms.length &&
                 moveInDate &&
                 price &&

@@ -10,19 +10,29 @@ export default function SubletStep2Page() {
   const { showToast } = useApp();
 
   const handleNext = () => {
+    const isOtherRoom = subletData.roomTypes?.includes("other");
     if (
       !subletData.roomTypes?.length ||
+      (isOtherRoom && !subletData.customRoomType?.trim()) ||
       !subletData.leaseTerms?.length ||
       !subletData.moveInDate
     ) {
-      showToast("请完善房型、租期和入住时间", "error");
+      showToast(
+        isOtherRoom && !subletData.customRoomType?.trim()
+          ? "请填写自定义房型"
+          : "请完善房型、租期和入住时间",
+        "error",
+      );
       return;
     }
     router.push("/publish/sublet/step3");
   };
 
+  const isOtherRoomSelected = (subletData.roomTypes || []).includes("other");
+
   const isStepValid = !!(
     subletData.roomTypes?.length &&
+    (!isOtherRoomSelected || subletData.customRoomType?.trim()) &&
     subletData.leaseTerms?.length &&
     subletData.moveInDate
   );
@@ -48,7 +58,14 @@ export default function SubletStep2Page() {
   ];
 
   const toggleRoomType = (id: string) => {
-    setSubletData({ roomTypes: [id] });
+    if (id === "other") {
+      setSubletData({
+        roomTypes: ["other"],
+        customRoomType: subletData.customRoomType || "",
+      });
+    } else {
+      setSubletData({ roomTypes: [id], customRoomType: "" });
+    }
   };
 
   const toggleTerm = (term: string) => {
@@ -138,6 +155,22 @@ export default function SubletStep2Page() {
                   );
                 })}
               </div>
+              {isOtherRoomSelected && (
+                <div className="mt-4">
+                  <label className="block text-sm font-bold text-[#1f2933] mb-2">
+                    自定义房型 <span className="text-[#2f9e6d]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={subletData.customRoomType || ""}
+                    onChange={(e) =>
+                      setSubletData({ customRoomType: e.target.value })
+                    }
+                    placeholder="例如：主卧合租、地下室单间、客厅隔间"
+                    className="w-full px-4 py-3 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d] outline-none transition-all text-[15px] placeholder:text-[#a0aeb5] bg-white"
+                  />
+                </div>
+              )}
             </section>
           </div>
 

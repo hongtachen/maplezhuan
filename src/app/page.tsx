@@ -20,6 +20,7 @@ import {
   getRoomTypeLabel,
   formatCityLabel,
   matchesLeaseTerm,
+  matchesRoomType,
 } from "@/lib/browseFilters";
 
 function SearchIcon() {
@@ -393,7 +394,7 @@ export default function BrowsePage() {
       }
       if (
         appliedFilters.roomType !== "不限" &&
-        listing.roomType !== appliedFilters.roomType
+        !matchesRoomType(appliedFilters.roomType, listing.roomType)
       ) {
         return false;
       }

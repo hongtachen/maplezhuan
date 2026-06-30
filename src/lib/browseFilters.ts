@@ -68,6 +68,28 @@ const ROOM_TYPE_LABEL_MAP = Object.fromEntries(
   SUBLET_ROOM_TYPES.map((r) => [r.id, r.label]),
 ) as Record<string, string>;
 
+/** Preset room type IDs used at publish time (excludes 不限 / 其他). */
+const PRESET_ROOM_TYPE_IDS = new Set<string>(
+  SUBLET_ROOM_TYPES.map((r) => r.id).filter(
+    (id) => id !== "不限" && id !== "other",
+  ),
+);
+
+export function isCustomRoomType(roomType?: string): boolean {
+  if (!roomType) return false;
+  return !PRESET_ROOM_TYPE_IDS.has(roomType) && roomType !== "other";
+}
+
+/** Match room type filter — custom publish text counts as 其他. */
+export function matchesRoomType(filter: string, stored?: string): boolean {
+  if (filter === "不限") return true;
+  if (!stored) return false;
+  if (filter === "other") {
+    return stored === "other" || isCustomRoomType(stored);
+  }
+  return filter === stored;
+}
+
 /** Common Canadian cities — bilingual display for browse filters. */
 const CITY_BILINGUAL: Record<string, string> = {
   Toronto: "多伦多",

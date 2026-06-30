@@ -10,6 +10,7 @@ interface SubletFormData {
   unit: string;
   hideAddress: boolean;
   roomTypes: string[];
+  customRoomType: string;
   leaseTerms: string[];
   moveInDate: string;
   renewable?: boolean;
@@ -53,6 +54,7 @@ const initialSubletData: SubletFormData = {
   unit: "",
   hideAddress: false,
   roomTypes: [],
+  customRoomType: "",
   leaseTerms: [],
   moveInDate: "",
   renewable: undefined,
