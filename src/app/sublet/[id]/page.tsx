@@ -28,6 +28,7 @@ import FavoriteHeartIcon, {
 } from "@/components/motion/FavoriteHeartIcon";
 import BargainPriceModal from "@/components/chat/BargainPriceModal";
 import { sendBargainOffer } from "@/lib/firebase/bargainChat";
+import { formatMoveInDate } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
 
@@ -526,7 +527,7 @@ export default function SubletDetailPage() {
               <div className="space-y-6">
                 <section>
                   <h2 className="text-base font-bold text-[#1f2933] mb-3">
-                    转租参数
+                    基本讯息
                   </h2>
                   <div className="flex flex-wrap gap-3">
                     <div className="bg-[#f3fbf7] px-4 py-2 rounded-xl">
@@ -534,7 +535,7 @@ export default function SubletDetailPage() {
                         起租日期
                       </span>
                       <span className="text-sm font-bold text-[#2f9e6d]">
-                        {sublet.moveInDate || "随时入住"}
+                        {formatMoveInDate(sublet.moveInDate)}
                       </span>
                     </div>
                     <div className="bg-[#f3fbf7] px-4 py-2 rounded-xl">

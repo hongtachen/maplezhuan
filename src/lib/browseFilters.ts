@@ -122,6 +122,18 @@ export function getRoomTypeLabel(id: string): string {
   return ROOM_TYPE_LABEL_MAP[id] ?? id;
 }
 
+/** Display move-in date on sublet detail (flexible → 时间灵活). */
+export function formatMoveInDate(moveInDate?: string): string {
+  if (!moveInDate) return "随时入住";
+  if (moveInDate === "flexible") return "时间灵活";
+  const iso = moveInDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const [, year, month, day] = iso;
+    return `${year}年${Number(month)}月${Number(day)}日`;
+  }
+  return moveInDate;
+}
+
 /** Bilingual city label for filter chips / search bar, e.g. "Toronto · 多伦多". */
 export function formatCityLabel(city: string): string {
   if (city === "全部城市") return city;

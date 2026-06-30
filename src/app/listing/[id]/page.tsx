@@ -28,6 +28,7 @@ import FavoriteHeartIcon, {
 } from "@/components/motion/FavoriteHeartIcon";
 import BargainPriceModal from "@/components/chat/BargainPriceModal";
 import { sendBargainOffer } from "@/lib/firebase/bargainChat";
+import { getCategoryLabel } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
 
@@ -532,7 +533,7 @@ export default function ListingDetailPage() {
               <div className="space-y-6">
                 <section>
                   <h2 className="text-base font-bold text-[#1f2933] mb-3">
-                    商品参数
+                    基本讯息
                   </h2>
                   <div className="flex gap-4">
                     <div className="bg-[#f3fbf7] px-4 py-2 rounded-xl">
@@ -548,7 +549,7 @@ export default function ListingDetailPage() {
                         分类
                       </span>
                       <span className="text-sm font-bold text-[#2f9e6d]">
-                        {item.category}
+                        {getCategoryLabel(item.category)}
                       </span>
                     </div>
                   </div>
