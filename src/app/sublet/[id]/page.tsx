@@ -27,8 +27,10 @@ import FavoriteHeartIcon, {
   useFavoriteBounce,
 } from "@/components/motion/FavoriteHeartIcon";
 import BargainPriceModal from "@/components/chat/BargainPriceModal";
+import TransactionRequestModal from "@/components/chat/TransactionRequestModal";
 import { sendBargainOffer } from "@/lib/firebase/bargainChat";
 import { buildNewSubletRequestEmail, sendEmail } from "@/lib/email";
+import { DEFAULT_REQUEST_MESSAGES } from "@/lib/transactionRequest";
 import { formatMoveInDate } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
@@ -50,7 +52,11 @@ export default function SubletDetailPage() {
   const [showWechat, setShowWechat] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showBargainModal, setShowBargainModal] = useState(false);
+  const [bargainModalKey, setBargainModalKey] = useState(0);
   const [bargainSubmitting, setBargainSubmitting] = useState(false);
+  const [showReserveModal, setShowReserveModal] = useState(false);
+  const [reserveModalKey, setReserveModalKey] = useState(0);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
   const { profile: seller } = useSellerProfile(sublet?.sellerId);
   const sellerRating = formatSellerRating(seller);
 
@@ -92,12 +98,21 @@ export default function SubletDetailPage() {
     fetchSublet();
   }, [id, user]);
 
-  const handleAction = async (action: "contact" | "request_reserve") => {
+  const handleAction = async (
+    action: "contact" | "request_reserve",
+    messageText?: string,
+  ) => {
     if (!user) {
       router.push("/profile");
       return;
     }
     if (user.uid === sublet?.sellerId) return;
+
+    if (action === "request_reserve" && messageText === undefined) {
+      setReserveModalKey((k) => k + 1);
+      setShowReserveModal(true);
+      return;
+    }
 
     try {
       const chatsRef = collection(db, "chats");
@@ -119,10 +134,11 @@ export default function SubletDetailPage() {
         sublet!.title ||
         `${sublet!.roomTypes?.[0] || "房间"} in ${sublet!.propertyType}`;
 
-      let initialText = "我对这个转租感兴趣";
+      let initialText: string = DEFAULT_REQUEST_MESSAGES.sublet.contact;
       let msgType = "text";
       if (action === "request_reserve") {
-        initialText = "您好！我想申请预留这件转租，请问可以吗？";
+        initialText =
+          messageText ?? DEFAULT_REQUEST_MESSAGES.sublet.request_reserve;
         msgType = "request_reserve";
       }
 
@@ -197,7 +213,17 @@ export default function SubletDetailPage() {
     }
   };
 
-  const handleBargainSubmit = async (offerPrice: number) => {
+  const handleReserveSubmit = async (message: string) => {
+    setRequestSubmitting(true);
+    try {
+      await handleAction("request_reserve", message);
+      setShowReserveModal(false);
+    } finally {
+      setRequestSubmitting(false);
+    }
+  };
+
+  const handleBargainSubmit = async (offerPrice: number, message: string) => {
     if (!user || !sublet) return;
     const title =
       sublet.title ||
@@ -213,6 +239,7 @@ export default function SubletDetailPage() {
         itemType: "sublet",
         listingCollection: "sublets",
         emailRoleLabel: "房东",
+        message,
       });
       setShowBargainModal(false);
       router.push(`/messages/${chatId}`);
@@ -617,6 +644,7 @@ export default function SubletDetailPage() {
                       handleAction("contact");
                       return;
                     }
+                    setBargainModalKey((k) => k + 1);
                     setShowBargainModal(true);
                   }}
                   className="w-full py-2.5 rounded-2xl border-2 border-[#2f9e6d] text-[#2f9e6d] font-bold text-sm hover:bg-[#f3fbf7] transition-colors"
@@ -677,12 +705,23 @@ export default function SubletDetailPage() {
       </div>
 
       <BargainPriceModal
+        key={`bargain-${bargainModalKey}`}
         open={showBargainModal}
         onClose={() => setShowBargainModal(false)}
         onSubmit={handleBargainSubmit}
         itemType="sublet"
         listPrice={sublet.price}
         loading={bargainSubmitting}
+      />
+
+      <TransactionRequestModal
+        key={`reserve-${reserveModalKey}`}
+        open={showReserveModal}
+        onClose={() => setShowReserveModal(false)}
+        onSubmit={handleReserveSubmit}
+        requestType="request_reserve"
+        listingType="sublet"
+        loading={requestSubmitting}
       />
     </div>
   );

@@ -27,8 +27,11 @@ import FavoriteHeartIcon, {
   useFavoriteBounce,
 } from "@/components/motion/FavoriteHeartIcon";
 import BargainPriceModal from "@/components/chat/BargainPriceModal";
+import TransactionRequestModal from "@/components/chat/TransactionRequestModal";
 import { sendBargainOffer } from "@/lib/firebase/bargainChat";
 import { buildNewItemRequestEmail, sendEmail } from "@/lib/email";
+import { DEFAULT_REQUEST_MESSAGES } from "@/lib/transactionRequest";
+import type { TransactionRequestType } from "@/lib/transactionRequest";
 import { getCategoryLabel } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
@@ -50,7 +53,12 @@ export default function ListingDetailPage() {
   const [showWechat, setShowWechat] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showBargainModal, setShowBargainModal] = useState(false);
+  const [bargainModalKey, setBargainModalKey] = useState(0);
   const [bargainSubmitting, setBargainSubmitting] = useState(false);
+  const [requestModalAction, setRequestModalAction] =
+    useState<TransactionRequestType | null>(null);
+  const [requestModalKey, setRequestModalKey] = useState(0);
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
   const { profile: seller } = useSellerProfile(item?.sellerId);
   const sellerRating = formatSellerRating(seller);
 
@@ -98,14 +106,33 @@ export default function ListingDetailPage() {
     fetchItem();
   }, [id, user]);
 
+  const openRequestModal = (action: TransactionRequestType) => {
+    if (!user) {
+      router.push("/profile");
+      return;
+    }
+    if (user.uid === item?.sellerId) return;
+    setRequestModalAction(action);
+    setRequestModalKey((k) => k + 1);
+  };
+
   const handleAction = async (
     action: "contact" | "request_buy" | "request_reserve",
+    messageText?: string,
   ) => {
     if (!user) {
       router.push("/profile");
       return;
     }
     if (user.uid === item?.sellerId) return;
+
+    if (
+      (action === "request_buy" || action === "request_reserve") &&
+      messageText === undefined
+    ) {
+      openRequestModal(action);
+      return;
+    }
 
     try {
       const chatsRef = collection(db, "chats");
@@ -123,13 +150,14 @@ export default function ListingDetailPage() {
         }
       });
 
-      let initialText = "我对这件商品感兴趣";
+      let initialText: string = DEFAULT_REQUEST_MESSAGES.item.contact;
       let msgType = "text";
       if (action === "request_buy") {
-        initialText = "您好！我想直接购买这件商品，请确认！";
+        initialText = messageText ?? DEFAULT_REQUEST_MESSAGES.item.request_buy;
         msgType = "request_buy";
       } else if (action === "request_reserve") {
-        initialText = "您好！我想申请预留这件商品，请问可以吗？";
+        initialText =
+          messageText ?? DEFAULT_REQUEST_MESSAGES.item.request_reserve;
         msgType = "request_reserve";
       }
 
@@ -205,7 +233,18 @@ export default function ListingDetailPage() {
     }
   };
 
-  const handleBargainSubmit = async (offerPrice: number) => {
+  const handleRequestSubmit = async (message: string) => {
+    if (!requestModalAction) return;
+    setRequestSubmitting(true);
+    try {
+      await handleAction(requestModalAction, message);
+      setRequestModalAction(null);
+    } finally {
+      setRequestSubmitting(false);
+    }
+  };
+
+  const handleBargainSubmit = async (offerPrice: number, message: string) => {
     if (!user || !item) return;
     setBargainSubmitting(true);
     try {
@@ -218,6 +257,7 @@ export default function ListingDetailPage() {
         itemType: "item",
         listingCollection: "items",
         emailRoleLabel: "卖家",
+        message,
       });
       setShowBargainModal(false);
       router.push(`/messages/${chatId}`);
@@ -608,6 +648,7 @@ export default function ListingDetailPage() {
                       handleAction("contact");
                       return;
                     }
+                    setBargainModalKey((k) => k + 1);
                     setShowBargainModal(true);
                   }}
                   className="w-full py-2.5 rounded-2xl border-2 border-[#2f9e6d] text-[#2f9e6d] font-bold text-sm hover:bg-[#f3fbf7] transition-colors"
@@ -660,12 +701,23 @@ export default function ListingDetailPage() {
       </div>
 
       <BargainPriceModal
+        key={`bargain-${bargainModalKey}`}
         open={showBargainModal}
         onClose={() => setShowBargainModal(false)}
         onSubmit={handleBargainSubmit}
         itemType="item"
         listPrice={item.price}
         loading={bargainSubmitting}
+      />
+
+      <TransactionRequestModal
+        key={`request-${requestModalKey}`}
+        open={requestModalAction !== null}
+        onClose={() => setRequestModalAction(null)}
+        onSubmit={handleRequestSubmit}
+        requestType={requestModalAction ?? "request_reserve"}
+        listingType="item"
+        loading={requestSubmitting}
       />
     </div>
   );

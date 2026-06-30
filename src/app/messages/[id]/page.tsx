@@ -93,6 +93,7 @@ export default function ChatPage() {
   const [acting, setActing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState(false);
+  const [counterModalKey, setCounterModalKey] = useState(0);
   const [counterSubmitting, setCounterSubmitting] = useState(false);
 
   const isSeller = !!(user && item && item.sellerId === user.uid);
@@ -415,7 +416,10 @@ export default function ChatPage() {
     }
   };
 
-  const handleCounterBargainSubmit = async (offerPrice: number) => {
+  const handleCounterBargainSubmit = async (
+    offerPrice: number,
+    message: string,
+  ) => {
     if (!user || !chat || !itemType || !otherUser) return;
     setCounterSubmitting(true);
     try {
@@ -427,6 +431,7 @@ export default function ChatPage() {
         recipientId: otherUserId,
         offerPrice,
         itemType,
+        message,
       });
       setShowCounterModal(false);
       showToast("还价已发送", "success");
@@ -640,7 +645,10 @@ export default function ChatPage() {
                     onConfirmSold={handleConfirmSold}
                     onDecline={handleDecline}
                     onAcceptBargain={handleAcceptBargain}
-                    onCounterBargain={() => setShowCounterModal(true)}
+                    onCounterBargain={() => {
+                      setCounterModalKey((k) => k + 1);
+                      setShowCounterModal(true);
+                    }}
                     onDeclineBargain={handleDeclineBargain}
                     canActOnBargain={canActOnBargain}
                     onReview={() => setShowReviewModal(true)}
@@ -706,6 +714,7 @@ export default function ChatPage() {
 
       {item && itemType && (
         <BargainPriceModal
+          key={counterModalKey}
           open={showCounterModal}
           onClose={() => setShowCounterModal(false)}
           onSubmit={handleCounterBargainSubmit}

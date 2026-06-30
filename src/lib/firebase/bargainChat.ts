@@ -24,6 +24,7 @@ type SendBargainOfferParams = {
   itemType: ItemType;
   listingCollection: "items" | "sublets";
   emailRoleLabel: string;
+  message?: string;
 };
 
 export async function sendBargainOffer(
@@ -38,9 +39,11 @@ export async function sendBargainOffer(
     itemType,
     listingCollection,
     emailRoleLabel,
+    message: customMessage,
   } = params;
 
-  const initialText = buildBargainMessage(offerPrice, itemType);
+  const initialText =
+    customMessage?.trim() || buildBargainMessage(offerPrice, itemType);
   const msgType = "bargain_offer";
   const metadata = { offerPrice };
 
@@ -131,9 +134,11 @@ export async function sendBargainCounterOffer(params: {
   recipientId: string;
   offerPrice: number;
   itemType: ItemType;
+  message?: string;
 }): Promise<void> {
-  const { chatId, senderId, recipientId, offerPrice, itemType } = params;
-  const text = buildBargainMessage(offerPrice, itemType);
+  const { chatId, senderId, recipientId, offerPrice, itemType, message } =
+    params;
+  const text = message?.trim() || buildBargainMessage(offerPrice, itemType);
 
   await addDoc(collection(db, "messages"), {
     chatId,
