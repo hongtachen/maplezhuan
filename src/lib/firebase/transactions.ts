@@ -19,6 +19,14 @@ import {
   uiStatusToSubletDb,
   type ListingUiStatus,
 } from "@/lib/listingStatus";
+import {
+  buildBargainDeclinedEmail,
+  buildRequestDeclinedEmail,
+  buildReserveAcceptedEmail,
+  buildTransactionCancelledEmail,
+  buildTransactionCompletedEmail,
+  sendEmail,
+} from "@/lib/email";
 
 export type ItemType = "item" | "sublet";
 
@@ -62,18 +70,6 @@ function buyerFromProfile(profile: UserProfile): BuyerInfo {
   };
 }
 
-async function sendTransactionEmail(
-  to: string,
-  subject: string,
-  html: string,
-): Promise<void> {
-  if (!to) return;
-  await addDoc(collection(db, "mail"), {
-    to,
-    message: { subject, html },
-  });
-}
-
 async function notifyBuyerByEmail(
   buyer: BuyerInfo,
   subject: string,
@@ -82,7 +78,7 @@ async function notifyBuyerByEmail(
   if (!buyer.email) return;
   const profile = await getUserProfile(buyer.uid);
   if (profile?.emailNotifications === false) return;
-  await sendTransactionEmail(buyer.email, subject, html);
+  await sendEmail(buyer.email, subject, html);
 }
 
 async function postChatMessage(
@@ -141,13 +137,12 @@ export async function acceptReserve(params: {
   const text = "卖家已同意预留给您。";
   await postChatMessage(chatId, sellerId, text, "action_reserved", buyer.uid);
 
-  await notifyBuyerByEmail(
-    buyer,
-    `【枫转】您的预留申请已通过`,
-    `<p>您好，${buyer.nickname}：</p>
-     <p>卖家已同意 <b>${itemTitle}</b> 的预留申请。</p>
-     <p>可登录枫转平台查看对话详情。</p>`,
-  );
+  const reserveEmail = buildReserveAcceptedEmail({
+    nickname: buyer.nickname,
+    itemTitle,
+    chatId,
+  });
+  await notifyBuyerByEmail(buyer, reserveEmail.subject, reserveEmail.html);
 }
 
 export async function confirmSold(params: {
@@ -196,14 +191,12 @@ export async function confirmSold(params: {
       : "卖家已确认租出给您，交易完成！";
   await postChatMessage(chatId, seller.uid, text, "action_sold", buyer.uid);
 
-  await notifyBuyerByEmail(
-    buyer,
-    `【枫转】交易已完成`,
-    `<p>您好，${buyer.nickname}：</p>
-     <p>卖家已确认 <b>${listing.title}</b> 的交易完成。</p>
-     <p>如果您喜欢本次交易，请给卖家一个评价！</p>
-     <p>或者您有什么建议也可以告诉我们，这能帮助我们改进平台来给大家提供更好的服务，感谢!</p>`,
-  );
+  const soldEmail = buildTransactionCompletedEmail({
+    nickname: buyer.nickname,
+    itemTitle: listing.title,
+    chatId,
+  });
+  await notifyBuyerByEmail(buyer, soldEmail.subject, soldEmail.html);
 }
 
 export async function acceptBargain(params: {
@@ -240,12 +233,15 @@ export async function declineBargain(params: {
     recipientProfile?.email &&
     recipientProfile.emailNotifications !== false
   ) {
-    await sendTransactionEmail(
+    const bargainDeclinedEmail = buildBargainDeclinedEmail({
+      nickname: recipientProfile.nickname || "用户",
+      itemTitle,
+      chatId,
+    });
+    await sendEmail(
       recipientProfile.email,
-      `【枫转】议价未被接受`,
-      `<p>您好，${recipientProfile.nickname || "用户"}：</p>
-       <p>对方未能接受您对 <b>${itemTitle}</b> 的议价。</p>
-       <p>您可以在枫转继续沟通或浏览其他信息。</p>`,
+      bargainDeclinedEmail.subject,
+      bargainDeclinedEmail.html,
     );
   }
 }
@@ -264,14 +260,13 @@ export async function declineRequest(params: {
 
   await postChatMessage(chatId, sellerId, text, "action_declined", buyer.uid);
 
-  await notifyBuyerByEmail(
-    buyer,
-    `【枫转】您的申请未被接受`,
-    `<p>您好，${buyer.nickname}：</p>
-     <p>卖家未能接受您对 <b>${itemTitle}</b> 的申请。</p>
-     ${reason ? `<p>原因：${reason}</p>` : ""}
-     <p>您可以在枫转继续浏览其他商品。</p>`,
-  );
+  const declinedEmail = buildRequestDeclinedEmail({
+    nickname: buyer.nickname,
+    itemTitle,
+    reason,
+    chatId,
+  });
+  await notifyBuyerByEmail(buyer, declinedEmail.subject, declinedEmail.html);
 }
 
 /** Notify buyer when seller relists after reserve/sale. */
@@ -309,12 +304,15 @@ export async function cancelOrdersForRelistedListing(params: {
   if (cancelledAny) {
     const profile = await getUserProfile(buyerId);
     if (profile?.email) {
+      const cancelledEmail = buildTransactionCancelledEmail({
+        nickname: profile.nickname || "买家",
+        itemTitle,
+        chatId: chatId ?? undefined,
+      });
       await notifyBuyerByEmail(
         buyerFromProfile(profile),
-        `【枫转】交易已取消 — ${itemTitle}`,
-        `<p>您好，${profile.nickname || "买家"}：</p>
-         <p>卖家已将 <b>${itemTitle}</b> 重新上架，您之前的成交记录已标记为<b>已取消</b>。</p>
-         <p>如有疑问，可通过站内私信联系卖家。</p>`,
+        cancelledEmail.subject,
+        cancelledEmail.html,
       );
     }
   }
@@ -450,18 +448,23 @@ export async function changeListingStatus(params: {
       );
 
       if (uiStatus === "已售") {
-        await notifyBuyerByEmail(
-          buyer,
-          `【枫转】交易已完成`,
-          `<p>您好，${buyer.nickname}：</p>
-           <p>卖家已确认 <b>${listing.title}</b> 的交易完成。</p>`,
-        );
+        const soldEmail = buildTransactionCompletedEmail({
+          nickname: buyer.nickname,
+          itemTitle: listing.title,
+          chatId,
+          includeFeedbackNote: false,
+        });
+        await notifyBuyerByEmail(buyer, soldEmail.subject, soldEmail.html);
       } else if (uiStatus === "已预留") {
+        const reserveEmail = buildReserveAcceptedEmail({
+          nickname: buyer.nickname,
+          itemTitle: listing.title,
+          chatId,
+        });
         await notifyBuyerByEmail(
           buyer,
-          `【枫转】您的预留申请已通过`,
-          `<p>您好，${buyer.nickname}：</p>
-           <p>卖家已同意您对 <b>${listing.title}</b> 的预留申请。</p>`,
+          reserveEmail.subject,
+          reserveEmail.html,
         );
       }
     }

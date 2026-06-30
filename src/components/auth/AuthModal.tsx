@@ -1,10 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
 
+function getAuthSubtitle(pathname: string): string {
+  if (pathname.startsWith("/messages")) {
+    return "登录后查看并处理您的消息";
+  }
+  if (pathname.startsWith("/profile/settings")) {
+    return "登录后管理您的通知设置";
+  }
+  if (pathname.startsWith("/profile")) {
+    return "登录后继续使用枫转";
+  }
+  return "闲置转租一眼看清";
+}
+
 export default function AuthModal() {
+  const pathname = usePathname();
+  const subtitle = getAuthSubtitle(pathname);
   const { loginWithGoogle, loginWithEmail, registerWithEmail } = useAuthStore();
   const { showToast } = useApp();
 
@@ -87,9 +103,7 @@ export default function AuthModal() {
           <h1 className="text-2xl font-bold text-[#1f2933] mb-2">
             欢迎来到 MapleZhuan
           </h1>
-          <p className="text-sm text-[#5a6b73] text-center mb-8">
-            闲置转租一眼看清
-          </p>
+          <p className="text-sm text-[#5a6b73] text-center mb-8">{subtitle}</p>
 
           {/* Mode Toggle */}
           <div className="flex w-full bg-gray-50 p-1 rounded-xl mb-6 border border-[rgba(31,41,51,0.04)] relative">
