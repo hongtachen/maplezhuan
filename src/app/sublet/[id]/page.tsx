@@ -28,6 +28,7 @@ import FavoriteHeartIcon, {
 } from "@/components/motion/FavoriteHeartIcon";
 import BargainPriceModal from "@/components/chat/BargainPriceModal";
 import { sendBargainOffer } from "@/lib/firebase/bargainChat";
+import { buildNewSubletRequestEmail, sendEmail } from "@/lib/email";
 import { formatMoveInDate } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
@@ -125,7 +126,10 @@ export default function SubletDetailPage() {
         msgType = "request_reserve";
       }
 
+      let chatId: string;
+
       if (existingChatId) {
+        chatId = existingChatId;
         if (action === "request_reserve") {
           await addDoc(collection(db, "messages"), {
             chatId: existingChatId,
@@ -152,6 +156,7 @@ export default function SubletDetailPage() {
           unreadCounts: { [sublet!.sellerId]: 1 },
         };
         const newDoc = await addDoc(collection(db, "chats"), newChat);
+        chatId = newDoc.id;
         await addDoc(collection(db, "messages"), {
           chatId: newDoc.id,
           senderId: user.uid,
@@ -174,16 +179,13 @@ export default function SubletDetailPage() {
           if (sellerSnap.exists()) {
             const sellerData = sellerSnap.data();
             if (sellerData.emailNotifications !== false && sellerData.email) {
-              await addDoc(collection(db, "mail"), {
-                to: sellerData.email,
-                message: {
-                  subject: `【枫叶闲置】您的房源“${title}”有新的预订申请！`,
-                  html: `<p>您好，${sellerData.nickname || "房东"}：</p>
-                         <p>有租客对您的房源 <b>${title}</b> 发起了 <b>预订申请</b>。</p>
-                         <p>租客留言："${initialText}"</p>
-                         <p>请登录枫叶闲置查看并处理该请求。</p>`,
-                },
+              const { subject, html } = buildNewSubletRequestEmail({
+                nickname: sellerData.nickname || "房东",
+                title,
+                message: initialText,
+                chatId,
               });
+              await sendEmail(sellerData.email, subject, html);
             }
           }
         } catch (error) {
@@ -210,7 +212,6 @@ export default function SubletDetailPage() {
         offerPrice,
         itemType: "sublet",
         listingCollection: "sublets",
-        emailSubject: `【枫叶闲置】您的房源"${title}"有新的议价！`,
         emailRoleLabel: "房东",
       });
       setShowBargainModal(false);

@@ -28,6 +28,7 @@ import FavoriteHeartIcon, {
 } from "@/components/motion/FavoriteHeartIcon";
 import BargainPriceModal from "@/components/chat/BargainPriceModal";
 import { sendBargainOffer } from "@/lib/firebase/bargainChat";
+import { buildNewItemRequestEmail, sendEmail } from "@/lib/email";
 import { getCategoryLabel } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
@@ -132,7 +133,10 @@ export default function ListingDetailPage() {
         msgType = "request_reserve";
       }
 
+      let chatId: string;
+
       if (existingChatId) {
+        chatId = existingChatId;
         if (action === "request_buy" || action === "request_reserve") {
           await addDoc(collection(db, "messages"), {
             chatId: existingChatId,
@@ -159,6 +163,7 @@ export default function ListingDetailPage() {
           unreadCounts: { [item!.sellerId]: 1 },
         };
         const newDoc = await addDoc(collection(db, "chats"), newChat);
+        chatId = newDoc.id;
         await addDoc(collection(db, "messages"), {
           chatId: newDoc.id,
           senderId: user.uid,
@@ -181,16 +186,14 @@ export default function ListingDetailPage() {
           if (sellerSnap.exists()) {
             const sellerData = sellerSnap.data();
             if (sellerData.emailNotifications !== false && sellerData.email) {
-              await addDoc(collection(db, "mail"), {
-                to: sellerData.email,
-                message: {
-                  subject: `【枫叶闲置】您的商品“${item!.title}”有新的交易申请！`,
-                  html: `<p>您好，${sellerData.nickname || "卖家"}：</p>
-                         <p>有买家对您的商品 <b>${item!.title}</b> 发起了 <b>${action === "request_buy" ? "直接购买" : "预留申请"}</b>。</p>
-                         <p>买家留言："${initialText}"</p>
-                         <p>请登录枫叶闲置查看并处理该请求。</p>`,
-                },
+              const { subject, html } = buildNewItemRequestEmail({
+                nickname: sellerData.nickname || "卖家",
+                itemTitle: item!.title,
+                action,
+                message: initialText,
+                chatId,
               });
+              await sendEmail(sellerData.email, subject, html);
             }
           }
         } catch (error) {
@@ -214,7 +217,6 @@ export default function ListingDetailPage() {
         offerPrice,
         itemType: "item",
         listingCollection: "items",
-        emailSubject: `【枫叶闲置】您的商品"${item.title}"有新的议价！`,
         emailRoleLabel: "卖家",
       });
       setShowBargainModal(false);

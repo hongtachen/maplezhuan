@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./config";
 import { buildBargainMessage } from "@/lib/bargain";
+import { buildNewBargainEmail, sendEmail } from "@/lib/email";
 import type { ItemType } from "./transactions";
 
 type SendBargainOfferParams = {
@@ -22,7 +23,6 @@ type SendBargainOfferParams = {
   offerPrice: number;
   itemType: ItemType;
   listingCollection: "items" | "sublets";
-  emailSubject: string;
   emailRoleLabel: string;
 };
 
@@ -37,7 +37,6 @@ export async function sendBargainOffer(
     offerPrice,
     itemType,
     listingCollection,
-    emailSubject,
     emailRoleLabel,
   } = params;
 
@@ -108,16 +107,15 @@ export async function sendBargainOffer(
     if (sellerSnap.exists()) {
       const sellerData = sellerSnap.data();
       if (sellerData.emailNotifications !== false && sellerData.email) {
-        await addDoc(collection(db, "mail"), {
-          to: sellerData.email,
-          message: {
-            subject: emailSubject,
-            html: `<p>您好，${sellerData.nickname || emailRoleLabel}：</p>
-                   <p>有用户对您发布的 <b>${itemTitle}</b> 发起了 <b>议价</b>。</p>
-                   <p>留言："${initialText}"</p>
-                   <p>请登录枫转平台查看并处理。</p>`,
-          },
+        const { subject, html } = buildNewBargainEmail({
+          nickname: sellerData.nickname || emailRoleLabel,
+          roleLabel: emailRoleLabel,
+          itemTitle,
+          message: initialText,
+          chatId,
+          itemType,
         });
+        await sendEmail(sellerData.email, subject, html);
       }
     }
   } catch (error) {
