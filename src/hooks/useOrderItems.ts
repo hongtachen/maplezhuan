@@ -23,13 +23,15 @@ export type OrderItemView = {
   sellerAvatar?: string;
   boughtAt?: string;
   reviewed?: boolean;
+  cancelled?: boolean;
+  orderStatus?: "已完成" | "已评价" | "进行中" | "已取消";
 
   // Seller perspective fields (used by Sold items)
   buyerId?: string;
   buyer?: string;
   buyerAvatar?: string;
   soldAt?: string;
-  status?: "已完成" | "已评价" | "进行中";
+  status?: "已完成" | "已评价" | "进行中" | "已取消";
 };
 
 export function useOrderItems(role: "buyer" | "seller") {
@@ -73,6 +75,8 @@ export function useOrderItems(role: "buyer" | "seller") {
                 sellerAvatar: order.sellerAvatar,
                 boughtAt: formattedDate,
                 reviewed: order.status === "已评价",
+                cancelled: order.status === "已取消",
+                orderStatus: order.status,
               };
             } else {
               return {

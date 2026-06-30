@@ -27,6 +27,8 @@ export default function BoughtPage() {
   const reviewingItem = items.find((i) => i.id === reviewingId);
 
   const openReview = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (item?.cancelled) return;
     setReviewingId(id);
     setReviewRating(0);
     setReviewText("");
@@ -113,7 +115,9 @@ export default function BoughtPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-[20px] overflow-hidden shadow-sm border border-[rgba(31,41,51,0.04)]"
+                className={`bg-white rounded-[20px] overflow-hidden shadow-sm border border-[rgba(31,41,51,0.04)] ${
+                  item.cancelled ? "opacity-75" : ""
+                }`}
               >
                 <div className="flex items-center gap-4 p-4">
                   <div
@@ -135,7 +139,11 @@ export default function BoughtPage() {
                       购于 {item.boughtAt}
                     </p>
                   </div>
-                  {item.reviewed ? (
+                  {item.cancelled ? (
+                    <span className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-500">
+                      交易已取消
+                    </span>
+                  ) : item.reviewed ? (
                     <span className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600">
                       已评价
                     </span>
@@ -167,7 +175,7 @@ export default function BoughtPage() {
                     >
                       联系
                     </button>
-                    {!item.reviewed && (
+                    {!item.reviewed && !item.cancelled && (
                       <button
                         onClick={() => openReview(item.id)}
                         className="text-[12px] font-bold text-[#1f2933] bg-white border border-[rgba(31,41,51,0.12)] px-3 py-1.5 rounded-full hover:bg-gray-50 transition-colors"
