@@ -33,7 +33,7 @@ export const EMAIL_GLOBAL_CONTENT = {
     user: "用户",
   },
   footer: {
-    contactTitle: "有问题吗？ 请有以下的邮件来联系我们，感谢，我们会尽快回复您",
+    contactTitle: "有问题吗？ 请由以下的邮件来联系我们，感谢，我们会尽快回复您",
     unsubscribePrompt: "不想再收到通知？",
     unsubscribeLink: "前往通知设置来管理您的通知",
     suspiciousEmail: "若非您本人未发布此商品或感觉有误，请忽略或",
