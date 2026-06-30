@@ -7,13 +7,20 @@ import {
   FirestoreReadTimestamp,
 } from "@/lib/firebase/firestore";
 import { formatFirestoreDate } from "@/lib/utils";
+import {
+  dbStatusToUi,
+  ListingKind,
+  ListingUiStatus,
+} from "@/lib/listingStatus";
 
-export type ListingStatus = "在售" | "已预留" | "已售";
+export type ListingStatus = ListingUiStatus;
 
 export type MyListing = {
   id: string;
+  listingType: ListingKind;
   title: string;
   price: number;
+  priceUnit?: string;
   description: string;
   emoji: string;
   gradientFrom: string;
@@ -52,10 +59,11 @@ export function useMyListings() {
         const mappedItems: (MyListing & { _sortTime: number })[] = items.map(
           (i: ItemDocument) => ({
             id: i.id || "",
+            listingType: "item" as const,
             title: i.title,
             price: i.price,
             description: i.description,
-            emoji: "📦", // default emoji
+            emoji: "📦",
             gradientFrom: "#e0f2fe",
             gradientTo: "#bae6fd",
             postedAt: formatFirestoreDate(
@@ -64,14 +72,11 @@ export function useMyListings() {
             views: i.views || 0,
             favorites: i.favorites || 0,
             inquiries: i.inquiries || 0,
-            status: (i.status === "已售出"
-              ? "已售"
-              : i.status) as ListingStatus,
+            status: dbStatusToUi(i.status),
             location: i.location,
             image: i.images?.[0],
             buyerName: i.buyerName,
             buyerAvatar: i.buyerAvatar,
-            // Store raw timestamp for sorting
             _sortTime:
               i.createdAt && "seconds" in i.createdAt ? i.createdAt.seconds : 0,
           }),
@@ -80,11 +85,13 @@ export function useMyListings() {
         const mappedSublets: (MyListing & { _sortTime: number })[] =
           sublets.map((s: SubletDocument) => ({
             id: s.id || "",
+            listingType: "sublet" as const,
             title:
               s.title || `${s.roomTypes?.[0] || "房间"} in ${s.propertyType}`,
             price: s.price,
+            priceUnit: "/月",
             description: s.description,
-            emoji: "🏠", // default emoji
+            emoji: "🏠",
             gradientFrom: "#fce7f3",
             gradientTo: "#fbcfe8",
             postedAt: formatFirestoreDate(
@@ -93,25 +100,18 @@ export function useMyListings() {
             views: s.views || 0,
             favorites: s.favorites || 0,
             inquiries: s.inquiries || 0,
-            status: (s.status === "招租中" ? "在售" : "已售") as ListingStatus,
+            status: dbStatusToUi(s.status),
             location: s.address,
             image: s.images?.[0],
             buyerName: s.buyerName,
             buyerAvatar: s.buyerAvatar,
-            // Store raw timestamp for sorting
             _sortTime:
               s.createdAt && "seconds" in s.createdAt ? s.createdAt.seconds : 0,
           }));
 
         const combined = [...mappedItems, ...mappedSublets]
-          .sort((a, b) => {
-            return b._sortTime - a._sortTime;
-          })
-          .map((item) => {
-            // Remove internal sort field
-            const { _sortTime, ...rest } = item;
-            return rest;
-          });
+          .sort((a, b) => b._sortTime - a._sortTime)
+          .map(({ _sortTime, ...rest }) => rest);
 
         setListings(combined);
       } catch (error) {

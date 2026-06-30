@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 
-import { useMyListings, ListingStatus, MyListing } from "@/hooks/useMyListings";
+import { useMyListings, MyListing } from "@/hooks/useMyListings";
 import { updateDocument, deleteDocument } from "@/lib/firebase/firestore";
 import { useApp } from "@/components/app/AppContext";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -15,6 +15,15 @@ import {
   changeListingStatus,
   buyerFromProfile,
 } from "@/lib/firebase/transactions";
+import {
+  LISTING_UI_STATUSES,
+  ListingUiStatus,
+  getBuyerActionLabel,
+  getListingKindLabel,
+  getStatusBadgeLabel,
+  uiStatusToItemDb,
+  uiStatusToSubletDb,
+} from "@/lib/listingStatus";
 import MotionPopover from "@/components/motion/MotionPopover";
 import ProductThumbnail from "@/components/ui/ProductThumbnail";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -23,10 +32,10 @@ import { PageLoading } from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
 import { btnPrimary } from "@/lib/feedback/styles";
 
-const STATUS_TABS: ListingStatus[] = ["在售", "已预留", "已售"];
+const STATUS_TABS = LISTING_UI_STATUSES;
 
 const statusStyle: Record<
-  ListingStatus,
+  ListingUiStatus,
   { dot: string; text: string; bg: string }
 > = {
   在售: {
@@ -46,11 +55,11 @@ const statusStyle: Record<
   },
 };
 
-const ALL_STATUSES: ListingStatus[] = ["在售", "已预留", "已售"];
+const ALL_STATUSES = LISTING_UI_STATUSES;
 
 export default function MyListingsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<ListingStatus>("在售");
+  const [activeTab, setActiveTab] = useState<ListingUiStatus>("在售");
   const { listings, setListings, loading } = useMyListings();
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const { showToast } = useApp();
@@ -58,7 +67,7 @@ export default function MyListingsPage() {
 
   const [buyerModal, setBuyerModal] = useState<{
     id: string;
-    status: ListingStatus;
+    status: ListingUiStatus;
     buyers: UserProfile[];
   } | null>(null);
   const [loadingBuyers, setLoadingBuyers] = useState(false);
@@ -67,7 +76,7 @@ export default function MyListingsPage() {
   // Edit sheet state (removed old modal state, now just routing)
   const openEdit = (item: MyListing) => {
     setMenuOpen(null);
-    if (item.emoji === "🏠") {
+    if (item.listingType === "sublet") {
       router.push(`/publish/sublet/edit/${item.id}`);
     } else {
       router.push(`/publish/items/edit/${item.id}`);
@@ -76,7 +85,7 @@ export default function MyListingsPage() {
 
   const filtered = listings.filter((l) => l.status === activeTab);
 
-  const initiateChangeStatus = async (id: string, status: ListingStatus) => {
+  const initiateChangeStatus = async (id: string, status: ListingUiStatus) => {
     setMenuOpen(null);
     if (status === "在售") {
       await commitChangeStatus(id, status, null);
@@ -115,26 +124,30 @@ export default function MyListingsPage() {
 
   const commitChangeStatus = async (
     id: string,
-    status: ListingStatus,
+    status: ListingUiStatus,
     buyerId: string | null,
   ) => {
     try {
       const item = listings.find((l) => l.id === id);
       if (!item || !user) return;
 
-      const itemType = item.emoji === "🏠" ? "sublets" : "items";
-      const type: "item" | "sublet" = item.emoji === "🏠" ? "sublet" : "item";
+      const itemType = item.listingType;
+      const collectionName =
+        item.listingType === "sublet" ? "sublets" : "items";
       const buyer = buyerId
         ? buyerModal?.buyers.find((b) => b.uid === buyerId)
         : null;
 
       if (status === "在售") {
-        const newStatus = type === "sublet" ? "招租中" : "在售";
-        await updateDocument(itemType, id, { status: newStatus });
+        const newStatus =
+          item.listingType === "sublet"
+            ? uiStatusToSubletDb("在售")
+            : uiStatusToItemDb("在售");
+        await updateDocument(collectionName, id, { status: newStatus });
       } else {
         await changeListingStatus({
           itemId: id,
-          itemType: type,
+          itemType,
           uiStatus: status,
           buyer: buyer ? buyerFromProfile(buyer) : null,
           seller: {
@@ -168,13 +181,14 @@ export default function MyListingsPage() {
     try {
       const item = listings.find((l) => l.id === deleteModal);
       if (!item) return;
-      const collectionName = item.emoji === "🏠" ? "sublets" : "items";
+      const collectionName =
+        item.listingType === "sublet" ? "sublets" : "items";
 
       await deleteDocument(collectionName, deleteModal);
       setListings((prev) => prev.filter((l) => l.id !== deleteModal));
       setMenuOpen(null);
       setDeleteModal(null);
-      showToast("商品已删除", "success");
+      showToast("发布已删除", "success");
     } catch {
       showToast("删除失败", "error");
     }
@@ -185,7 +199,7 @@ export default function MyListingsPage() {
       acc[s] = listings.filter((l) => l.status === s).length;
       return acc;
     },
-    {} as Record<ListingStatus, number>,
+    {} as Record<ListingUiStatus, number>,
   );
 
   return (
@@ -277,14 +291,14 @@ export default function MyListingsPage() {
                     ? "⏳"
                     : "📁"
               }
-              title={`暂无${activeTab}商品`}
+              title={`暂无${activeTab}的发布`}
               action={
                 activeTab === "在售" ? (
                   <button
                     onClick={() => router.push("/publish")}
                     className={`px-6 ${btnPrimary}`}
                   >
-                    ＋ 发布第一件
+                    ＋ 发布第一条
                   </button>
                 ) : undefined
               }
@@ -303,7 +317,7 @@ export default function MyListingsPage() {
                     <div className="flex items-center gap-3 p-4 pb-3">
                       <Link
                         href={
-                          item.emoji === "🏠"
+                          item.listingType === "sublet"
                             ? `/sublet/${item.id}`
                             : `/listing/${item.id}`
                         }
@@ -327,11 +341,16 @@ export default function MyListingsPage() {
                         )}
                       </Link>
                       <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 text-[#5a6b73] shrink-0">
+                            {getListingKindLabel(item.listingType)}
+                          </span>
+                        </div>
                         <p className="font-semibold text-[#1f2933] text-[15px] truncate">
                           {item.title}
                         </p>
                         <p className="text-[#2f9e6d] font-bold text-sm mt-0.5">
-                          ${item.price} CAD
+                          ${item.price} CAD{item.priceUnit ?? ""}
                         </p>
                         <p className="text-[#5a6b73] text-[12px] mt-0.5">
                           发布于 {item.postedAt}
@@ -435,7 +454,7 @@ export default function MyListingsPage() {
                       <span
                         className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${st.bg} ${st.text}`}
                       >
-                        {item.status}
+                        {getStatusBadgeLabel(item.listingType, item.status)}
                       </span>
                     </div>
                     {/* Buyer info row */}
@@ -457,7 +476,10 @@ export default function MyListingsPage() {
                               </div>
                             )}
                             <span className="text-[12px] text-[#5a6b73]">
-                              {item.status === "已预留" ? "预留给" : "售出给"}：
+                              {getBuyerActionLabel(
+                                item.listingType,
+                                item.status,
+                              )}
                               <span className="font-medium text-[#1f2933]">
                                 {item.buyerName}
                               </span>
@@ -532,17 +554,17 @@ export default function MyListingsPage() {
       >
         <ModalHeader
           title="选择交易对象"
-          subtitle="为了保证评价真实性，请选择与您成交的买家"
+          subtitle="为了保证评价真实性，请选择与您成交的对方"
           onClose={() => setBuyerModal(null)}
         />
         <ModalBody className="pt-2">
           {loadingBuyers ? (
-            <PageLoading label="正在查找买家..." />
+            <PageLoading label="正在查找对方..." />
           ) : buyerModal && buyerModal.buyers.length === 0 ? (
             <EmptyState
               emoji="👤"
-              title="没有找到近期私聊过的买家"
-              description="您可以直接跳过，仍可将商品标记为对应状态"
+              title="没有找到近期私聊过的用户"
+              description="您可以直接跳过，仍可将发布标记为对应状态"
               action={
                 <button
                   onClick={() =>

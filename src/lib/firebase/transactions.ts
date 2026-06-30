@@ -13,6 +13,11 @@ import { db } from "./config";
 import { ItemDocument, MessageType, SubletDocument } from "./firestore";
 import { getUserProfile, UserProfile } from "./users";
 import { updateDocument } from "./firestore";
+import {
+  uiStatusToItemDb,
+  uiStatusToSubletDb,
+  type ListingUiStatus,
+} from "@/lib/listingStatus";
 
 export type ItemType = "item" | "sublet";
 
@@ -265,7 +270,7 @@ export async function declineRequest(params: {
 export async function changeListingStatus(params: {
   itemId: string;
   itemType: ItemType;
-  uiStatus: "在售" | "已预留" | "已售";
+  uiStatus: ListingUiStatus;
   buyer: BuyerInfo | null;
   seller: SellerInfo;
   listing: ListingInfo;
@@ -273,22 +278,10 @@ export async function changeListingStatus(params: {
   const { itemId, itemType, uiStatus, buyer, seller, listing } = params;
   const colName = itemType === "item" ? "items" : "sublets";
 
-  let newStatus: string;
-  if (itemType === "sublet") {
-    newStatus =
-      uiStatus === "在售"
-        ? "招租中"
-        : uiStatus === "已预留"
-          ? "已预留"
-          : "已租出";
-  } else {
-    newStatus =
-      uiStatus === "在售"
-        ? "在售"
-        : uiStatus === "已预留"
-          ? "已预留"
-          : "已售出";
-  }
+  const newStatus =
+    itemType === "sublet"
+      ? uiStatusToSubletDb(uiStatus)
+      : uiStatusToItemDb(uiStatus);
 
   const updates: Record<string, unknown> = { status: newStatus };
   if (buyer && (uiStatus === "已售" || uiStatus === "已预留")) {
