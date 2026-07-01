@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { validateVideoFileWithDuration } from "@/lib/video/validateVideo";
+import { MAX_VIDEO_SIZE_MB } from "@/lib/video/constants";
 import {
   getVideoPreviewUrl,
   revokeVideoPreviewUrl,
@@ -70,6 +71,11 @@ export default function VideoUpload({
     }
   };
 
+  const videoSizeLabel =
+    video instanceof File
+      ? `${(video.size / (1024 * 1024)).toFixed(1)}MB / 上限 ${MAX_VIDEO_SIZE_MB}MB`
+      : null;
+
   const handleRemove = () => {
     if (video instanceof File) {
       revokeVideoPreviewUrl(video);
@@ -83,8 +89,13 @@ export default function VideoUpload({
         <div>
           <p className="text-sm font-bold text-[#1f2933]">看房短视频</p>
           <p className="text-xs text-[#5a6b73] mt-0.5">
-            可选 · 小于50MB，建议30秒 · MP4 / MOV · 列表封面请用上方照片
+            可选 · 小于{MAX_VIDEO_SIZE_MB}MB · MP4 / MOV · 封面请用上方照片
           </p>
+          {videoSizeLabel && (
+            <p className="text-xs text-[#2f9e6d] mt-1 font-medium">
+              当前视频：{videoSizeLabel}
+            </p>
+          )}
         </div>
         {hasVideo && !validating && (
           <button

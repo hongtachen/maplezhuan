@@ -2,6 +2,7 @@ import {
   ALLOWED_VIDEO_MIME_TYPES,
   MAX_VIDEO_DURATION_SEC,
   MAX_VIDEO_SIZE_BYTES,
+  MAX_VIDEO_SIZE_MB,
 } from "./constants";
 import { withTimeout } from "./withTimeout";
 
@@ -21,7 +22,11 @@ export function validateVideoFile(file: File): VideoValidationResult {
   }
 
   if (file.size > MAX_VIDEO_SIZE_BYTES) {
-    return { ok: false, error: "视频大小不能超过 50MB" };
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+    return {
+      ok: false,
+      error: `视频大小为 ${sizeMb}MB，不能超过 ${MAX_VIDEO_SIZE_MB}MB`,
+    };
   }
 
   return { ok: true, durationSec: 0 };

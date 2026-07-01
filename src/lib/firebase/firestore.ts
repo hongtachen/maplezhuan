@@ -73,6 +73,8 @@ export type SubletDocument = {
   hideAddress: boolean;
   images: string[];
   videoUrl?: string;
+  /** @deprecated Legacy field; cleaned up on edit/delete */
+  videoPosterUrl?: string;
   videoDurationSec?: number;
   price: number;
   utilitiesIncluded: boolean;

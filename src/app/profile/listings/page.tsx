@@ -9,8 +9,16 @@ import {
   SellerHistoryListing,
 } from "@/hooks/useSellerHistory";
 import { deleteDocument } from "@/lib/firebase/firestore";
+import { cleanupListingMediaFiles } from "@/lib/firebase/storageCleanup";
 import { useApp } from "@/components/app/AppContext";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -236,7 +244,23 @@ function MyListingsPageContent() {
       const collectionName =
         item.listingType === "sublet" ? "sublets" : "items";
 
+      const docRef = doc(db, collectionName, deleteModal);
+      const snap = await getDoc(docRef);
+      const media = snap.exists()
+        ? {
+            images: snap.data().images as string[] | undefined,
+            videoUrl: snap.data().videoUrl as string | null | undefined,
+            videoPosterUrl: snap.data().videoPosterUrl as
+              | string
+              | null
+              | undefined,
+          }
+        : null;
+
       await deleteDocument(collectionName, deleteModal);
+      if (media) {
+        void cleanupListingMediaFiles(media);
+      }
       setListings((prev) => prev.filter((l) => l.id !== deleteModal));
       setMenuOpen(null);
       setDeleteModal(null);

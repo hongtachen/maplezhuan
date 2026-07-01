@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ImageUpload from "@/components/ui/ImageUpload";
 import { uploadMultipleImages } from "@/lib/firebase/storage";
+import { cleanupReplacedListingMedia } from "@/lib/firebase/storageCleanup";
 import { updateDocument } from "@/lib/firebase/firestore";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
@@ -43,6 +44,7 @@ export default function ItemEditPage() {
   const [condition, setCondition] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<(string | File)[]>([]);
+  const [originalImageUrls, setOriginalImageUrls] = useState<string[]>([]);
 
   const [locationMode, setLocationMode] = useState<"default" | "custom">(
     "custom",
@@ -78,6 +80,7 @@ export default function ItemEditPage() {
           setCondition(data.condition);
           setDescription(data.description);
           setImages(data.images || []);
+          setOriginalImageUrls(data.images || []);
           if (data.locationData) {
             setCustomLocation(data.locationData);
             setLocationMode("custom");
@@ -162,6 +165,11 @@ export default function ItemEditPage() {
         location: finalLocationData.text,
         locationData: finalLocationData,
         images: uploadedImageUrls,
+      });
+
+      void cleanupReplacedListingMedia({
+        previousImageUrls: originalImageUrls,
+        nextImageUrls: uploadedImageUrls,
       });
 
       showToast("保存成功！", "success");

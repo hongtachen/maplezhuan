@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import ImageUpload from "@/components/ui/ImageUpload";
 import VideoUpload from "@/components/ui/VideoUpload";
 import { uploadMultipleImages, uploadVideo } from "@/lib/firebase/storage";
+import { cleanupReplacedListingMedia } from "@/lib/firebase/storageCleanup";
 import { validateVideoFileWithDuration } from "@/lib/video/validateVideo";
 import { updateDocument } from "@/lib/firebase/firestore";
 import { doc, getDoc, deleteField } from "firebase/firestore";
@@ -49,6 +50,11 @@ export default function SubletEditPage() {
   const [leaseTerms, setLeaseTerms] = useState<string[]>([]);
   const [moveInDate, setMoveInDate] = useState("");
   const [images, setImages] = useState<(string | File)[]>([]);
+  const [originalImageUrls, setOriginalImageUrls] = useState<string[]>([]);
+  const [originalVideoUrl, setOriginalVideoUrl] = useState<string | null>(null);
+  const [originalVideoPosterUrl, setOriginalVideoPosterUrl] = useState<
+    string | null
+  >(null);
   const [video, setVideo] = useState<File | string | null>(null);
   const [videoDurationSec, setVideoDurationSec] = useState<number | null>(null);
   const [price, setPrice] = useState<number | "">("");
@@ -98,7 +104,10 @@ export default function SubletEditPage() {
           setLeaseTerms(data.leaseTerms || []);
           setMoveInDate(data.moveInDate || "");
           setImages(data.images || []);
+          setOriginalImageUrls(data.images || []);
           setVideo(data.videoUrl || null);
+          setOriginalVideoUrl(data.videoUrl || null);
+          setOriginalVideoPosterUrl(data.videoPosterUrl || null);
           setVideoDurationSec(data.videoDurationSec ?? null);
           setPrice(data.price);
           setUtilitiesIncluded(data.utilitiesIncluded || false);
@@ -191,10 +200,13 @@ export default function SubletEditPage() {
         contactWechat,
       };
 
+      let finalVideoUrl: string | null = null;
+
       if (video === null) {
         updatePayload.videoUrl = deleteField();
         updatePayload.videoPosterUrl = deleteField();
         updatePayload.videoDurationSec = deleteField();
+        finalVideoUrl = null;
       } else if (video instanceof File) {
         setUploadMessage("正在上传视频，请勿关闭页面...");
         const validation = await validateVideoFileWithDuration(video);
@@ -210,6 +222,7 @@ export default function SubletEditPage() {
           );
           updatePayload.videoUrl = uploaded.videoUrl;
           updatePayload.videoPosterUrl = deleteField();
+          finalVideoUrl = uploaded.videoUrl;
           if (uploaded.durationSec) {
             updatePayload.videoDurationSec = uploaded.durationSec;
           }
@@ -219,12 +232,21 @@ export default function SubletEditPage() {
         }
       } else if (typeof video === "string") {
         updatePayload.videoUrl = video;
+        finalVideoUrl = video;
         if (videoDurationSec) updatePayload.videoDurationSec = videoDurationSec;
       }
 
       setUploadMessage("正在保存房源信息...");
 
       await updateDocument("sublets", id, updatePayload);
+
+      void cleanupReplacedListingMedia({
+        previousImageUrls: originalImageUrls,
+        nextImageUrls: uploadedImageUrls,
+        previousVideoUrl: originalVideoUrl,
+        nextVideoUrl: finalVideoUrl,
+        previousVideoPosterUrl: originalVideoPosterUrl,
+      });
 
       showToast("保存成功！", "success");
       router.replace("/profile/listings");
