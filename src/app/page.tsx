@@ -7,7 +7,9 @@ import ListingCard, { ListingCardData } from "@/components/app/ListingCard";
 import MobileFilterModal from "@/components/app/MobileFilterModal";
 import { DURATION, EASE } from "@/lib/motion/tokens";
 import EmptyState from "@/components/ui/EmptyState";
-import LoadingSpinner, { PageLoading } from "@/components/ui/LoadingSpinner";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import BrowseLoadingShow from "@/components/loading/BrowseLoadingShow";
+import ListingSkeletonGrid from "@/components/loading/ListingSkeletonGrid";
 
 import { useItems, useSublets } from "@/hooks/useListings";
 import { extractUniqueCities, buildLocationOptions } from "@/lib/listingCities";
@@ -50,6 +52,12 @@ export default function BrowsePage() {
   const { items, loading: itemsLoading } = useItems();
   const { sublets, loading: subletsLoading } = useSublets();
   const [isFilterBusy, setIsFilterBusy] = useState(false);
+  const [holdBrandLoading, setHoldBrandLoading] = useState(true);
+
+  const switchTab = (tab: "item" | "sublet") => {
+    setActiveTab(tab);
+    setHoldBrandLoading(true);
+  };
 
   // Map backend documents to ListingCardData (hooks already filter to 在售 / 招租中)
   const ACTIVE_LISTINGS: ListingCardData[] = items.map((item) => ({
@@ -353,7 +361,8 @@ export default function BrowsePage() {
 
   const baseListings = activeTab === "item" ? ACTIVE_LISTINGS : ACTIVE_SUBLETS;
   const isLoading = activeTab === "item" ? itemsLoading : subletsLoading;
-  const showResultsBusy = isLoading || isFilterBusy;
+  const showBrandLoading = !isFilterBusy && (isLoading || holdBrandLoading);
+  const showResultsBusy = showBrandLoading || isFilterBusy;
 
   // Filtering Logic
   const activeListings = baseListings.filter((listing) => {
@@ -456,7 +465,7 @@ export default function BrowsePage() {
             <div className="flex items-center justify-center mb-4 md:mb-6 w-full">
               <div className="flex items-center bg-white rounded-full p-1 border border-[rgba(31,41,51,0.08)] shadow-sm">
                 <button
-                  onClick={() => setActiveTab("item")}
+                  onClick={() => switchTab("item")}
                   className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
                     activeTab === "item"
                       ? "bg-[#f3fbf7] text-[#2f9e6d] shadow-sm"
@@ -466,7 +475,7 @@ export default function BrowsePage() {
                   🏷️ 闲置
                 </button>
                 <button
-                  onClick={() => setActiveTab("sublet")}
+                  onClick={() => switchTab("sublet")}
                   className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
                     activeTab === "sublet"
                       ? "bg-indigo-50 text-indigo-600 shadow-sm"
@@ -976,9 +985,15 @@ export default function BrowsePage() {
                 className="relative min-h-[280px]"
               >
                 {showResultsBusy ? (
-                  <PageLoading
-                    label={isFilterBusy ? "正在更新结果..." : "加载中..."}
-                  />
+                  isFilterBusy ? (
+                    <ListingSkeletonGrid count={8} />
+                  ) : (
+                    <BrowseLoadingShow
+                      key={activeTab}
+                      loading={isLoading}
+                      onExitComplete={() => setHoldBrandLoading(false)}
+                    />
+                  )
                 ) : activeListings.length > 0 ? (
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-8">
                     {activeListings.map((listing) => (
@@ -1032,7 +1047,7 @@ export default function BrowsePage() {
         hasAppliedFilters={hasAppliedFilters}
         hasPendingFilters={hasPendingFilters}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={switchTab}
         itemLocation={itemLocation}
         setItemLocation={setItemLocation}
         subletLocation={subletLocation}
