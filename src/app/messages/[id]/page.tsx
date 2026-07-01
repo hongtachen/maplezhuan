@@ -46,6 +46,7 @@ import AnimatedMessageItem, {
   getMessageAlign,
 } from "@/components/motion/AnimatedMessageItem";
 import FadeModal from "@/components/motion/FadeModal";
+import { useCall } from "@/components/call/CallProvider";
 
 function isItemActive(status: string | undefined) {
   return status === "在售" || status === "招租中" || status === "已预留";
@@ -63,6 +64,7 @@ export default function ChatPage() {
   const chatId = params.id as string;
   const { user } = useAuthStore();
   const { showToast } = useApp();
+  const { startVoiceCall, isInCall } = useCall();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [messageFeed, setMessageFeed] = useState<MessageFeed>({
@@ -541,6 +543,23 @@ export default function ChatPage() {
     }
   };
 
+  const handleStartVoiceCall = async () => {
+    if (!user || !chat || !otherUser) return;
+    const otherUserId =
+      chat.participants.find((p) => p !== user.uid) || chat.participants[0];
+    try {
+      await startVoiceCall({
+        chatId,
+        calleeId: otherUserId,
+        calleeName: otherUser.nickname,
+        itemId: chat.itemId,
+        itemType: itemType ?? undefined,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleConfirmPickup = async (msgId: string) => {
     if (!user) return;
     try {
@@ -705,6 +724,8 @@ export default function ChatPage() {
         onSendImage={handleSendImage}
         onSendPickupTime={handleSendPickupTime}
         onShareContact={handleShareContact}
+        onStartVoiceCall={handleStartVoiceCall}
+        voiceCallDisabled={isInCall || !otherUser}
         onPickupBlocked={() =>
           showToast("请先完成预留或交易确认，再约定取货时间", "info")
         }
