@@ -53,8 +53,14 @@ export default function ItemPublishPage() {
     }
   }, [user]);
 
-  const handlePublishSuccessComplete = useCallback(() => {
-    router.push("/profile/listings");
+  const handlePublishSuccessBrowse = useCallback(() => {
+    setShowSuccess(false);
+    router.replace("/");
+  }, [router]);
+
+  const handlePublishSuccessListings = useCallback(() => {
+    setShowSuccess(false);
+    router.replace("/profile/listings");
   }, [router]);
 
   const handleSubmit = async () => {
@@ -419,7 +425,19 @@ export default function ItemPublishPage() {
       </div>
       <PublishSuccessOverlay
         open={showSuccess}
-        onComplete={handlePublishSuccessComplete}
+        message="闲置发布成功！"
+        actions={[
+          {
+            label: "去浏览看看",
+            onClick: handlePublishSuccessBrowse,
+            variant: "primary",
+          },
+          {
+            label: "查看发布记录",
+            onClick: handlePublishSuccessListings,
+            variant: "secondary",
+          },
+        ]}
       />
       <ConfirmDialog
         open={showFreeConfirm}

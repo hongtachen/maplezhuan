@@ -263,8 +263,9 @@ function MyListingsPageContent() {
         <header className="sticky top-0 z-40 bg-[#f3fbf7]/90 backdrop-blur-md px-4 py-3 flex items-center justify-center border-b border-[rgba(31,41,51,0.05)]">
           <div className="max-w-[500px] md:max-w-4xl lg:max-w-5xl w-full flex items-center justify-between">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push("/profile")}
               className="w-10 h-10 rounded-full flex items-center justify-center bg-white hover:bg-gray-50 shadow-sm border border-gray-100 transition-colors"
+              aria-label="返回个人中心"
             >
               <svg
                 className="w-5 h-5 text-[#1f2933]"
@@ -303,6 +304,25 @@ function MyListingsPageContent() {
         </header>
 
         <div className="max-w-[500px] md:max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 pt-4">
+          <Link
+            href="/"
+            className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-[#2f9e6d] hover:text-[#267a56] transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-4.35-4.35M11 8a3 3 0 100 6 3 3 0 000-6z"
+              />
+            </svg>
+            去浏览商品
+          </Link>
           <div className="flex bg-white rounded-[16px] p-1 shadow-sm border border-[rgba(31,41,51,0.04)]">
             {STATUS_TABS.map((tab) => (
               <button

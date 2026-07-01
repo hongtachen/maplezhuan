@@ -67,7 +67,7 @@ export default function ItemEditPage() {
           // Check ownership
           if (user && data.sellerId !== user.uid) {
             showToast("您无权编辑此商品", "error");
-            router.push("/profile/listings");
+            router.replace("/profile/listings");
             return;
           }
           setTitle(data.title);
@@ -160,7 +160,7 @@ export default function ItemEditPage() {
       });
 
       showToast("保存成功！", "success");
-      router.push("/profile/listings");
+      router.replace("/profile/listings");
     } catch (error) {
       console.error("Edit failed:", error);
       showToast("保存失败，请重试", "error");
