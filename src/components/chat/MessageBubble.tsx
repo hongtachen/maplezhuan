@@ -6,6 +6,8 @@ import ImageLightbox from "@/components/ui/ImageLightbox";
 import TransactionRequestCard from "./TransactionRequestCard";
 import TransactionStatusCard from "./TransactionStatusCard";
 import BargainOfferCard from "./BargainOfferCard";
+import { formatCallMessageForViewer } from "@/lib/calls/messages";
+import { formatPhoneForDisplay } from "@/lib/phone/validatePhone";
 
 type Props = {
   msg: MessageDocument;
@@ -259,12 +261,45 @@ export default function MessageBubble({
             <div className="flex items-center justify-between gap-2">
               <span className="text-[13px] text-[#5a6b73] min-w-0 truncate">
                 电话：
-                <span className="font-medium text-[#1f2933]">{phone}</span>
+                <span className="font-medium text-[#1f2933]">
+                  {formatPhoneForDisplay(phone)}
+                </span>
               </span>
               <CopyButton text={phone} label="电话已复制" onCopy={onCopy} />
             </div>
           )}
           <p className="text-[10px] text-[#5a6b73] mt-3">仅在此对话中可见</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (
+    msg.msgType === "call_invite" ||
+    msg.msgType === "call_ended" ||
+    msg.msgType === "call_missed" ||
+    msg.msgType === "call_declined" ||
+    msg.msgType === "call_cancelled"
+  ) {
+    const callText = formatCallMessageForViewer(msg.msgType, isMe, {
+      durationSec: msg.metadata?.callDurationSec,
+    });
+    const icon =
+      msg.msgType === "call_invite"
+        ? "📞"
+        : msg.msgType === "call_ended"
+          ? "✅"
+          : msg.msgType === "call_missed"
+            ? "📵"
+            : msg.msgType === "call_cancelled"
+              ? "↩️"
+              : "🚫";
+    return (
+      <div className="flex flex-col items-center w-full max-w-md mx-auto">
+        <span className="text-[10px] text-[#5a6b73] mb-1">{timeStr}</span>
+        <div className="bg-white/90 border border-[rgba(31,41,51,0.08)] rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
+          <span>{icon}</span>
+          <span className="text-[13px] text-[#5a6b73]">{callText}</span>
         </div>
       </div>
     );
