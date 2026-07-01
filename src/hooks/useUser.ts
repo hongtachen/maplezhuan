@@ -14,6 +14,11 @@ import {
   SubletDocument,
   FirestoreReadTimestamp,
 } from "@/lib/firebase/firestore";
+import {
+  mapItemToListingCard,
+  mapSubletToListingCard,
+} from "@/lib/mapListingCard";
+import type { ListingCardData } from "@/components/app/ListingCard";
 import { recalculateSellerRating } from "@/lib/firebase/reviews";
 import { formatFirestoreDate } from "@/lib/utils";
 
@@ -41,15 +46,7 @@ export type PublicSellerProfile = {
   avatarUrl?: string;
 };
 
-export type UserListing = {
-  id: string;
-  type: "item" | "sublet";
-  title: string;
-  price: number;
-  condition: string;
-  images: string[];
-  createdAt: FirestoreReadTimestamp;
-};
+export type UserListing = ListingCardData;
 
 function mapReviewDoc(r: {
   id?: string;
@@ -134,39 +131,27 @@ export function useUser(userId: string) {
     const fetchListings = async () => {
       try {
         const userItems = await getUserDocuments<ItemDocument>("items", userId);
-        const activeItems: UserListing[] = userItems
+        const activeItems = userItems
           .filter((item) => item.status === "在售")
           .map((item) => ({
-            id: item.id!,
-            type: "item" as const,
-            title: item.title,
-            price: item.price,
-            condition: item.condition,
-            images: item.images || [],
-            createdAt: item.createdAt,
+            card: mapItemToListingCard(item),
+            sortTime: item.createdAt?.seconds ?? 0,
           }));
 
         const userSublets = await getUserDocuments<SubletDocument>(
           "sublets",
           userId,
         );
-        const activeSublets: UserListing[] = userSublets
+        const activeSublets = userSublets
           .filter((sublet) => sublet.status === "招租中")
           .map((sublet) => ({
-            id: sublet.id!,
-            type: "sublet" as const,
-            title: `${sublet.propertyType} ${sublet.spaceType}出租`,
-            price: sublet.price,
-            condition: sublet.propertyType,
-            images: sublet.images || [],
-            createdAt: sublet.createdAt,
+            card: mapSubletToListingCard(sublet),
+            sortTime: sublet.createdAt?.seconds ?? 0,
           }));
 
-        const allListings = [...activeItems, ...activeSublets].sort((a, b) => {
-          const timeA = a.createdAt?.seconds ?? 0;
-          const timeB = b.createdAt?.seconds ?? 0;
-          return timeB - timeA;
-        });
+        const allListings = [...activeItems, ...activeSublets]
+          .sort((a, b) => b.sortTime - a.sortTime)
+          .map((entry) => entry.card);
 
         setItems(allListings);
       } catch (error) {

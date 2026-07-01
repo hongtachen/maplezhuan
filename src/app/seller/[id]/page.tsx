@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
+import ListingCard from "@/components/app/ListingCard";
+import { sellerRatingFromProfile } from "@/lib/sellerRating";
 
 export default function SellerProfilePage() {
   const router = useRouter();
@@ -14,6 +15,19 @@ export default function SellerProfilePage() {
     "listings",
   );
   const { user, reviews, items, loading } = useUser(id);
+
+  const listingCards = useMemo(() => {
+    if (!user) return [];
+    const sellerRating = sellerRatingFromProfile({
+      rating: user.rating,
+      reviewCount: user.reviewCount,
+    });
+    return items.map((listing) => ({
+      ...listing,
+      rating: sellerRating.rating,
+      reviewCount: sellerRating.reviewCount,
+    }));
+  }, [items, user]);
 
   if (loading) {
     return (
@@ -203,45 +217,10 @@ export default function SellerProfilePage() {
 
         {/* Content */}
         {activeTab === "listings" ? (
-          items && items.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {items.map((item) => (
-                <Link
-                  key={item.id}
-                  href={
-                    item.type === "sublet"
-                      ? `/sublet/${item.id}`
-                      : `/listing/${item.id}`
-                  }
-                  className="bg-white rounded-[20px] overflow-hidden shadow-sm border border-[rgba(31,41,51,0.04)] hover:shadow-md transition-shadow group flex flex-col"
-                >
-                  <div className="w-full aspect-[4/3] bg-gray-100 relative overflow-hidden flex items-center justify-center">
-                    {item.images && item.images.length > 0 ? (
-                      <img
-                        src={item.images[0]}
-                        alt={item.title}
-                        className="max-w-full max-h-full object-contain"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl opacity-20 bg-gradient-to-br from-[#a1e8c7] to-[#7bcfa9]">
-                        📦
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-bold text-[#1f2933] text-[14px] line-clamp-2 leading-snug mb-2 group-hover:text-[#2f9e6d] transition-colors">
-                      {item.title}
-                    </h3>
-                    <div className="mt-auto flex items-end justify-between">
-                      <div className="text-[16px] font-black text-[#2f9e6d]">
-                        ${item.price}
-                      </div>
-                      <div className="text-[11px] text-[#5a6b73]">
-                        {item.condition}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+          listingCards.length > 0 ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-8">
+              {listingCards.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
               ))}
             </div>
           ) : (

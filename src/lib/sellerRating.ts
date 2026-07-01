@@ -1,12 +1,15 @@
-import type { UserProfile } from "@/lib/firebase/users";
-
 export type SellerRatingSnapshot = {
   rating: number | null;
   reviewCount: number;
 };
 
+export type SellerRatingSource = {
+  rating?: number | null;
+  reviewCount?: number;
+};
+
 export function sellerRatingFromProfile(
-  profile: UserProfile | null | undefined,
+  profile: SellerRatingSource | null | undefined,
 ): SellerRatingSnapshot {
   const reviewCount = profile?.reviewCount ?? 0;
   if (reviewCount <= 0) {
