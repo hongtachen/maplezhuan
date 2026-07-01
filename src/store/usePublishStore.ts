@@ -15,6 +15,8 @@ interface SubletFormData {
   moveInDate: string;
   renewable?: boolean;
   images: (string | File)[];
+  video?: File | string | null;
+  videoDurationSec?: number | null;
   price: number | "";
   utilitiesIncluded: boolean;
   furnished: boolean;
@@ -59,6 +61,8 @@ const initialSubletData: SubletFormData = {
   moveInDate: "",
   renewable: undefined,
   images: [],
+  video: null,
+  videoDurationSec: null,
   price: "",
   utilitiesIncluded: false,
   furnished: false,

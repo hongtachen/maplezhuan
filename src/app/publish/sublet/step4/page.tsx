@@ -3,7 +3,8 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePublishStore } from "@/store/usePublishStore";
-import { uploadMultipleImages } from "@/lib/firebase/storage";
+import { uploadMultipleImages, uploadVideo } from "@/lib/firebase/storage";
+import { validateVideoFileWithDuration } from "@/lib/video/validateVideo";
 import { addSublet } from "@/lib/firebase/firestore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
@@ -17,8 +18,14 @@ export default function SubletStep4Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handlePublishSuccessComplete = useCallback(() => {
-    router.push("/profile/listings");
+  const handlePublishSuccessBrowse = useCallback(() => {
+    setShowSuccess(false);
+    router.replace("/");
+  }, [router]);
+
+  const handlePublishSuccessListings = useCallback(() => {
+    setShowSuccess(false);
+    router.replace("/profile/listings");
   }, [router]);
 
   const handleSubmit = async () => {
@@ -40,7 +47,6 @@ export default function SubletStep4Page() {
     try {
       setIsSubmitting(true);
 
-      // Upload images
       let uploadedImageUrls: string[] = [];
       if (subletData.images && subletData.images.length > 0) {
         const files = subletData.images.filter(
@@ -57,7 +63,36 @@ export default function SubletStep4Page() {
         uploadedImageUrls = [...existingUrls, ...newUrls];
       }
 
-      // Save to firestore
+      let videoUrl: string | undefined;
+      let videoDurationSec: number | undefined;
+
+      if (subletData.video) {
+        if (subletData.video instanceof File) {
+          const validation = await validateVideoFileWithDuration(
+            subletData.video,
+          );
+          if (!validation.ok) {
+            showToast(validation.error, "error");
+            return;
+          }
+          try {
+            const uploaded = await uploadVideo(
+              subletData.video,
+              `sublets/${user.uid}/videos`,
+              { durationSec: validation.durationSec },
+            );
+            videoUrl = uploaded.videoUrl;
+            videoDurationSec = uploaded.durationSec;
+          } catch {
+            showToast("视频上传失败，请重试或先不添加视频", "error");
+            return;
+          }
+        } else if (typeof subletData.video === "string") {
+          videoUrl = subletData.video;
+          videoDurationSec = subletData.videoDurationSec || undefined;
+        }
+      }
+
       const resolvedRoomTypes = subletData.roomTypes?.includes("other")
         ? [subletData.customRoomType?.trim() || ""].filter(Boolean)
         : subletData.roomTypes || [];
@@ -86,6 +121,8 @@ export default function SubletStep4Page() {
         contactWechat: subletData.contactWechat || "",
         description: subletData.description || "",
         images: uploadedImageUrls,
+        ...(videoUrl && { videoUrl }),
+        ...(videoDurationSec && { videoDurationSec }),
         sellerId: user.uid,
         status: "招租中",
         views: 0,
@@ -325,7 +362,19 @@ export default function SubletStep4Page() {
       </div>
       <PublishSuccessOverlay
         open={showSuccess}
-        onComplete={handlePublishSuccessComplete}
+        message="房源发布成功！"
+        actions={[
+          {
+            label: "去浏览看看",
+            onClick: handlePublishSuccessBrowse,
+            variant: "primary",
+          },
+          {
+            label: "查看发布记录",
+            onClick: handlePublishSuccessListings,
+            variant: "secondary",
+          },
+        ]}
       />
     </div>
   );

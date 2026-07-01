@@ -6,27 +6,37 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { overlayVariants } from "@/lib/motion/variants";
 import { DURATION, EASE, OVERLAY_TRANSITION } from "@/lib/motion/tokens";
 
+export type PublishSuccessAction = {
+  label: string;
+  onClick: () => void;
+  variant?: "primary" | "secondary";
+};
+
 type Props = {
   open: boolean;
   message?: string;
-  onComplete: () => void;
-  /** Delay before calling onComplete (ms) */
+  /** Shown below the message when provided (replaces auto-redirect). */
+  actions?: PublishSuccessAction[];
+  /** @deprecated Use `actions` instead. Auto-redirect after delay when no actions. */
+  onComplete?: () => void;
   delay?: number;
 };
 
 export default function PublishSuccessOverlay({
   open,
   message = "发布成功！",
+  actions,
   onComplete,
   delay = 1400,
 }: Props) {
   const reducedMotion = useReducedMotion();
+  const useAutoRedirect = !actions?.length && !!onComplete;
 
   useEffect(() => {
-    if (!open) return;
-    const timer = window.setTimeout(onComplete, delay);
+    if (!open || !useAutoRedirect) return;
+    const timer = window.setTimeout(onComplete!, delay);
     return () => window.clearTimeout(timer);
-  }, [open, onComplete, delay]);
+  }, [open, onComplete, delay, useAutoRedirect]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,7 +87,7 @@ export default function PublishSuccessOverlay({
             </svg>
           </motion.div>
           <motion.p
-            className="text-lg font-semibold text-[#1f2933]"
+            className="text-lg font-semibold text-[#1f2933] mb-1"
             initial={reducedMotion ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -88,6 +98,33 @@ export default function PublishSuccessOverlay({
           >
             {message}
           </motion.p>
+          {actions && actions.length > 0 && (
+            <motion.div
+              className="mt-6 flex flex-col gap-3 w-full max-w-[280px]"
+              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: DURATION.fast,
+                ease: EASE.out,
+                delay: reducedMotion ? 0 : 0.45,
+              }}
+            >
+              {actions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={action.onClick}
+                  className={`w-full py-3.5 rounded-xl font-bold text-[15px] transition-colors ${
+                    action.variant === "secondary"
+                      ? "bg-white text-[#1f2933] border border-[rgba(31,41,51,0.12)] hover:bg-gray-50"
+                      : "bg-[#2f9e6d] text-white hover:bg-[#267a56]"
+                  }`}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </motion.div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>,

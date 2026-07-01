@@ -72,6 +72,8 @@ export type SubletDocument = {
   unit: string;
   hideAddress: boolean;
   images: string[];
+  videoUrl?: string;
+  videoDurationSec?: number;
   price: number;
   utilitiesIncluded: boolean;
   furnished: boolean;

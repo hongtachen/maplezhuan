@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { usePublishStore } from "@/store/usePublishStore";
 import { useApp } from "@/components/app/AppContext";
 import ImageUpload from "@/components/ui/ImageUpload";
+import VideoUpload from "@/components/ui/VideoUpload";
 
 export default function SubletStep3Page() {
   const router = useRouter();
@@ -82,6 +83,14 @@ export default function SubletStep3Page() {
                 images={subletData.images || []}
                 onImagesChange={(images) => setSubletData({ images })}
                 maxImages={9}
+              />
+            </section>
+
+            <section className="mb-8 md:mb-0">
+              <VideoUpload
+                video={subletData.video}
+                onVideoChange={(video) => setSubletData({ video })}
+                onError={(message) => showToast(message, "error")}
               />
             </section>
           </div>

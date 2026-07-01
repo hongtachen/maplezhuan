@@ -364,6 +364,7 @@ export default function SubletDetailPage() {
             {/* Placeholder Image Area */}
             <ListingImageGallery
               images={sublet.images ?? []}
+              videoUrl={sublet.videoUrl}
               alt={title}
               fallback={
                 <div className="w-full h-full bg-gradient-to-br from-[#c7d2fe] to-[#a5b4fc] flex items-center justify-center">

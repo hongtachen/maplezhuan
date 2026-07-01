@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ImageUpload from "@/components/ui/ImageUpload";
-import { uploadMultipleImages } from "@/lib/firebase/storage";
+import VideoUpload from "@/components/ui/VideoUpload";
+import { uploadMultipleImages, uploadVideo } from "@/lib/firebase/storage";
+import { validateVideoFileWithDuration } from "@/lib/video/validateVideo";
 import { updateDocument } from "@/lib/firebase/firestore";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, deleteField } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
@@ -44,6 +46,8 @@ export default function SubletEditPage() {
   const [leaseTerms, setLeaseTerms] = useState<string[]>([]);
   const [moveInDate, setMoveInDate] = useState("");
   const [images, setImages] = useState<(string | File)[]>([]);
+  const [video, setVideo] = useState<File | string | null>(null);
+  const [videoDurationSec, setVideoDurationSec] = useState<number | null>(null);
   const [price, setPrice] = useState<number | "">("");
   const [description, setDescription] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -60,7 +64,7 @@ export default function SubletEditPage() {
           const data = snap.data() as SubletDocument;
           if (user && data.sellerId !== user.uid) {
             showToast("您无权编辑此房源", "error");
-            router.push("/profile/listings");
+            router.replace("/profile/listings");
             return;
           }
           setTitle(data.title || "");
@@ -91,6 +95,8 @@ export default function SubletEditPage() {
           setLeaseTerms(data.leaseTerms || []);
           setMoveInDate(data.moveInDate || "");
           setImages(data.images || []);
+          setVideo(data.videoUrl || null);
+          setVideoDurationSec(data.videoDurationSec ?? null);
           setPrice(data.price);
           setUtilitiesIncluded(data.utilitiesIncluded || false);
           setFurnished(data.furnished || false);
@@ -137,6 +143,11 @@ export default function SubletEditPage() {
       return;
     }
 
+    if (!user?.uid) {
+      showToast("请先登录", "error");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -154,7 +165,7 @@ export default function SubletEditPage() {
         uploadedImageUrls = [...existingUrls, ...newUrls];
       }
 
-      await updateDocument("sublets", id, {
+      const updatePayload: Record<string, unknown> = {
         title,
         propertyType,
         spaceType,
@@ -174,10 +185,42 @@ export default function SubletEditPage() {
         description,
         contactPhone,
         contactWechat,
-      });
+      };
+
+      if (video === null) {
+        updatePayload.videoUrl = deleteField();
+        updatePayload.videoPosterUrl = deleteField();
+        updatePayload.videoDurationSec = deleteField();
+      } else if (video instanceof File) {
+        const validation = await validateVideoFileWithDuration(video);
+        if (!validation.ok) {
+          showToast(validation.error, "error");
+          return;
+        }
+        try {
+          const uploaded = await uploadVideo(
+            video,
+            `sublets/${user.uid}/videos`,
+            { durationSec: validation.durationSec },
+          );
+          updatePayload.videoUrl = uploaded.videoUrl;
+          updatePayload.videoPosterUrl = deleteField();
+          if (uploaded.durationSec) {
+            updatePayload.videoDurationSec = uploaded.durationSec;
+          }
+        } catch {
+          showToast("视频上传失败，请重试或先移除视频", "error");
+          return;
+        }
+      } else if (typeof video === "string") {
+        updatePayload.videoUrl = video;
+        if (videoDurationSec) updatePayload.videoDurationSec = videoDurationSec;
+      }
+
+      await updateDocument("sublets", id, updatePayload);
 
       showToast("保存成功！", "success");
-      router.push("/profile/listings");
+      router.replace("/profile/listings");
     } catch (error) {
       console.error("Edit failed:", error);
       showToast("保存失败，请重试", "error");
@@ -623,6 +666,17 @@ export default function SubletEditPage() {
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-[rgba(31,41,51,0.04)]">
               <h2 className="font-bold text-[#1f2933] mb-4">房源图片</h2>
               <ImageUpload images={images} onImagesChange={setImages} />
+            </section>
+
+            <section className="bg-white rounded-3xl p-6 shadow-sm border border-[rgba(31,41,51,0.04)]">
+              <VideoUpload
+                video={video}
+                onVideoChange={(v) => {
+                  setVideo(v);
+                  if (!v) setVideoDurationSec(null);
+                }}
+                onError={(message) => showToast(message, "error")}
+              />
             </section>
           </div>
         </div>

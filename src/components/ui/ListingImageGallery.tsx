@@ -7,6 +7,7 @@ import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 interface ListingImageGalleryProps {
   images: string[];
   alt: string;
+  videoUrl?: string;
   fallback?: ReactNode;
   className?: string;
 }
@@ -14,6 +15,7 @@ interface ListingImageGalleryProps {
 export default function ListingImageGallery({
   images,
   alt,
+  videoUrl,
   fallback,
   className = "",
 }: ListingImageGalleryProps) {
@@ -33,7 +35,7 @@ export default function ListingImageGallery({
 
   const swipeHandlers = useSwipeNavigation(goPrev, goNext, hasMultiple);
 
-  if (!hasImages) {
+  if (!hasImages && !videoUrl) {
     return (
       <div
         className={`w-full min-h-[240px] max-h-[70vh] bg-gray-100 md:rounded-3xl flex items-center justify-center overflow-hidden ${className}`}
@@ -43,11 +45,69 @@ export default function ListingImageGallery({
     );
   }
 
+  return (
+    <div className={`w-full space-y-4 ${className}`}>
+      {videoUrl && (
+        <div className="w-full min-h-[200px] max-h-[50vh] bg-black md:rounded-3xl overflow-hidden">
+          <video
+            src={videoUrl}
+            controls
+            playsInline
+            preload="metadata"
+            className="w-full max-h-[50vh] object-contain mx-auto"
+          />
+          <p className="text-center text-xs text-[#5a6b73] py-2 bg-white md:rounded-b-3xl">
+            看房视频
+          </p>
+        </div>
+      )}
+
+      {hasImages && (
+        <GalleryImages
+          images={images}
+          alt={alt}
+          swipeHandlers={swipeHandlers}
+          activeIndex={activeIndex}
+          setActiveIndex={setActiveIndex}
+          lightboxOpen={lightboxOpen}
+          setLightboxOpen={setLightboxOpen}
+          goPrev={goPrev}
+          goNext={goNext}
+          hasMultiple={hasMultiple}
+        />
+      )}
+    </div>
+  );
+}
+
+function GalleryImages({
+  images,
+  alt,
+  swipeHandlers,
+  activeIndex,
+  setActiveIndex,
+  lightboxOpen,
+  setLightboxOpen,
+  goPrev,
+  goNext,
+  hasMultiple,
+}: {
+  images: string[];
+  alt: string;
+  swipeHandlers: ReturnType<typeof useSwipeNavigation>;
+  activeIndex: number;
+  setActiveIndex: (i: number) => void;
+  lightboxOpen: boolean;
+  setLightboxOpen: (v: boolean) => void;
+  goPrev: () => void;
+  goNext: () => void;
+  hasMultiple: boolean;
+}) {
   const galleryNavBtn =
     "hidden md:flex shrink-0 w-9 h-9 rounded-full bg-white/85 backdrop-blur-md border border-white text-[#1f2933]/70 items-center justify-center shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-white hover:text-[#1f2933] hover:shadow-md active:scale-[0.86] transition-all duration-200 ease-out z-10";
 
   return (
-    <div className={`w-full ${className}`}>
+    <>
       <div
         className="relative w-full min-h-[240px] max-h-[70vh] bg-gray-100 md:rounded-3xl overflow-hidden flex items-center justify-center"
         {...swipeHandlers}
@@ -176,6 +236,6 @@ export default function ListingImageGallery({
           onIndexChange={hasMultiple ? setActiveIndex : undefined}
         />
       )}
-    </div>
+    </>
   );
 }
