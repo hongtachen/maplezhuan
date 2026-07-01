@@ -50,7 +50,6 @@ export async function createUserProfile(
     nickname: data.nickname || "MapleUser",
     avatarUrl: data.avatarUrl || defaultAvatar,
     isVerifiedSeller: data.isVerifiedSeller || false,
-    rating: 5.0,
     reviewCount: 0,
     profileViews: 0,
     createdAt: Date.now(),

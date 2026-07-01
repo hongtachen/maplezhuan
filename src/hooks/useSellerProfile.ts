@@ -42,9 +42,13 @@ export function formatSellerRating(profile: UserProfile | null | undefined) {
   if (count === 0) {
     return { score: null as number | null, count: 0, label: "暂无评分" };
   }
+  const score = profile?.rating ?? null;
+  if (score == null) {
+    return { score: null, count, label: "暂无评分" };
+  }
   return {
-    score: profile?.rating ?? 5.0,
+    score,
     count,
-    label: `${(profile?.rating ?? 5.0).toFixed(1)} · ${count}评价`,
+    label: `${score.toFixed(1)} · ${count}评价`,
   };
 }

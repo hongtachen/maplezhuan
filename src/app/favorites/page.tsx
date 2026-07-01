@@ -4,6 +4,11 @@ import { useMemo } from "react";
 import { useApp } from "@/components/app/AppContext";
 import ListingCard, { ListingCardData } from "@/components/app/ListingCard";
 import { useItems, useSublets } from "@/hooks/useListings";
+import { useSellerRatings } from "@/hooks/useSellerRatings";
+import {
+  mapItemToListingCardWithStatus,
+  mapSubletToListingCardWithStatus,
+} from "@/lib/mapListingCard";
 import { PageLoading } from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -15,50 +20,29 @@ export default function FavoritesPage() {
 
   const loading = itemsLoading || subletsLoading;
 
+  const sellerIds = useMemo(
+    () => [
+      ...items.map((item) => item.sellerId),
+      ...sublets.map((sublet) => sublet.sellerId),
+    ],
+    [items, sublets],
+  );
+  const { ratingsMap } = useSellerRatings(sellerIds);
+
   const favoriteListings = useMemo(() => {
     if (loading) return [];
 
-    const mappedItems: ListingCardData[] = items.map((i) => ({
-      id: i.id || "",
-      type: "item",
-      title: i.title,
-      price: i.price,
-      location: i.location,
-      city: i.city || i.locationData?.city,
-      neighbourhood: "",
-      condition: i.condition,
-      rating: 5.0,
-      status: i.status === "在售" ? "available" : "sold",
-      isTopSeller: false,
-      image: i.images?.[0],
-      itemCategory: i.category,
-    }));
+    const mappedItems: ListingCardData[] = items.map((item) =>
+      mapItemToListingCardWithStatus(item, ratingsMap[item.sellerId]),
+    );
 
-    const mappedSublets: ListingCardData[] = sublets.map((s) => ({
-      id: s.id || "",
-      type: "sublet",
-      title: s.title || `${s.roomTypes?.[0] || "房间"} in ${s.propertyType}`,
-      price: s.price,
-      priceUnit: "/月",
-      location: s.address,
-      city: s.city || s.locationData?.city,
-      neighbourhood: s.hideAddress ? "隐蔽地址" : "",
-      rating: 5.0,
-      status: s.status === "招租中" ? "available" : "sold",
-      image: s.images?.[0],
-      roomType: s.roomTypes?.[0],
-      subletTerm: s.leaseTerms?.[0],
-      renewable:
-        s.renewable === true
-          ? "可续租"
-          : s.renewable === false
-            ? "不可续租"
-            : undefined,
-    }));
+    const mappedSublets: ListingCardData[] = sublets.map((sublet) =>
+      mapSubletToListingCardWithStatus(sublet, ratingsMap[sublet.sellerId]),
+    );
 
     const allListings = [...mappedItems, ...mappedSublets];
     return allListings.filter((l) => favoriteIds.has(l.id));
-  }, [items, sublets, favoriteIds, loading]);
+  }, [items, sublets, favoriteIds, loading, ratingsMap]);
 
   return (
     <div className="flex flex-col min-h-full bg-[#f3fbf7]">

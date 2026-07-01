@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import ListingCard, { ListingCardData } from "@/components/app/ListingCard";
 import MobileFilterModal from "@/components/app/MobileFilterModal";
@@ -12,6 +12,11 @@ import BrowseLoadingShow from "@/components/loading/BrowseLoadingShow";
 import ListingSkeletonGrid from "@/components/loading/ListingSkeletonGrid";
 
 import { useItems, useSublets } from "@/hooks/useListings";
+import { useSellerRatings } from "@/hooks/useSellerRatings";
+import {
+  mapItemToListingCard,
+  mapSubletToListingCard,
+} from "@/lib/mapListingCard";
 import { extractUniqueCities, buildLocationOptions } from "@/lib/listingCities";
 import {
   ITEM_CATEGORIES,
@@ -59,45 +64,30 @@ export default function BrowsePage() {
     setHoldBrandLoading(true);
   };
 
-  // Map backend documents to ListingCardData (hooks already filter to 在售 / 招租中)
-  const ACTIVE_LISTINGS: ListingCardData[] = items.map((item) => ({
-    id: item.id || "unknown",
-    type: "item",
-    title: item.title,
-    price: item.price,
-    location: item.location,
-    city: item.city || item.locationData?.city,
-    neighbourhood: "",
-    condition: item.condition,
-    rating: 5.0,
-    status: "available",
-    image: item.images?.[0],
-    itemCategory: item.category,
-  }));
+  const sellerIds = useMemo(
+    () => [
+      ...items.map((item) => item.sellerId),
+      ...sublets.map((sublet) => sublet.sellerId),
+    ],
+    [items, sublets],
+  );
+  const { ratingsMap } = useSellerRatings(sellerIds);
 
-  const ACTIVE_SUBLETS: ListingCardData[] = sublets.map((sublet) => ({
-    id: sublet.id || "unknown",
-    type: "sublet",
-    title:
-      sublet.title ||
-      `${sublet.roomTypes?.[0] || "房间"} in ${sublet.propertyType}`,
-    price: sublet.price,
-    priceUnit: "/月",
-    location: sublet.address,
-    city: sublet.city || sublet.locationData?.city,
-    neighbourhood: sublet.hideAddress ? "隐蔽地址" : "",
-    rating: 5.0,
-    status: "available",
-    image: sublet.images?.[0],
-    roomType: sublet.roomTypes?.[0],
-    subletTerm: sublet.leaseTerms?.[0],
-    renewable:
-      sublet.renewable === true
-        ? "可续租"
-        : sublet.renewable === false
-          ? "不可续租"
-          : undefined,
-  }));
+  const ACTIVE_LISTINGS: ListingCardData[] = useMemo(
+    () =>
+      items.map((item) =>
+        mapItemToListingCard(item, ratingsMap[item.sellerId]),
+      ),
+    [items, ratingsMap],
+  );
+
+  const ACTIVE_SUBLETS: ListingCardData[] = useMemo(
+    () =>
+      sublets.map((sublet) =>
+        mapSubletToListingCard(sublet, ratingsMap[sublet.sellerId]),
+      ),
+    [sublets, ratingsMap],
+  );
 
   const itemCities = extractUniqueCities(items);
   const subletCities = extractUniqueCities(sublets);

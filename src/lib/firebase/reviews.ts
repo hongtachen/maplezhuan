@@ -20,7 +20,7 @@ export async function recalculateSellerRating(sellerId: string): Promise<{
   const reviewCount = reviews.length;
   const rating =
     reviewCount === 0
-      ? 5.0
+      ? 0
       : Math.round(
           (reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10,
         ) / 10;

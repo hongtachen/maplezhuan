@@ -36,7 +36,7 @@ export type PublicSellerProfile = {
   id: string;
   nickname: string;
   isVerified: boolean;
-  rating: number;
+  rating: number | null;
   reviewCount: number;
   avatarUrl?: string;
 };
@@ -99,7 +99,10 @@ export function useUser(userId: string) {
           id: userId,
           nickname: p.nickname || "用户",
           isVerified: !!p.isVerifiedSeller,
-          rating: p.rating ?? 5.0,
+          rating:
+            (p.reviewCount ?? 0) > 0 && typeof p.rating === "number"
+              ? p.rating
+              : null,
           reviewCount: p.reviewCount ?? 0,
           avatarUrl: p.avatarUrl,
         } satisfies PublicSellerProfile);

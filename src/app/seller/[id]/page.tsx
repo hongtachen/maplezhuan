@@ -72,6 +72,9 @@ export default function SellerProfilePage() {
     );
   }
 
+  const sellerScore =
+    user.reviewCount > 0 && user.rating != null ? user.rating : null;
+
   return (
     <div className="flex flex-col min-h-screen bg-[#f3fbf7]">
       {/* Header */}
@@ -130,11 +133,11 @@ export default function SellerProfilePage() {
 
           {/* Big Rating Display */}
           <div className="flex items-center gap-3 bg-gray-50 px-5 py-3 rounded-2xl border border-[rgba(31,41,51,0.03)]">
-            {user.reviewCount > 0 ? (
+            {sellerScore != null ? (
               <>
                 <div className="text-center">
                   <div className="text-2xl font-black text-[#1f2933]">
-                    {user.rating.toFixed(1)}
+                    {sellerScore.toFixed(1)}
                   </div>
                   <div className="text-[10px] text-[#5a6b73] font-bold">
                     综合评分
@@ -142,12 +145,11 @@ export default function SellerProfilePage() {
                 </div>
                 <div className="w-px h-8 bg-gray-200 mx-1" />
                 <div className="flex flex-col gap-0.5">
-                  {/* create one star for each rating level; if rating as 4 / 4.5, would have 4 stars */}
                   <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <svg
                         key={i}
-                        className={`w-4 h-4 ${i <= Math.round(user.rating) ? "text-amber-400" : "text-gray-300"}`}
+                        className={`w-4 h-4 ${i <= Math.round(sellerScore) ? "text-amber-400" : "text-gray-300"}`}
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >

@@ -15,6 +15,7 @@ import FavoriteHeartIcon, {
   useFavoriteBounce,
 } from "@/components/motion/FavoriteHeartIcon";
 import { DURATION, EASE } from "@/lib/motion/tokens";
+import { formatCardRatingLabel } from "@/lib/sellerRating";
 
 export type ListingType = "item" | "sublet";
 
@@ -28,7 +29,7 @@ export interface ListingCardData {
   city?: string;
   neighbourhood: string;
   condition?: string; // for items
-  rating: number;
+  rating: number | null;
   reviewCount?: number;
   status: "available" | "reserved" | "sold";
   isTopSeller?: boolean;
@@ -38,8 +39,10 @@ export interface ListingCardData {
   gradientFrom?: string;
   gradientTo?: string;
 
-  /** Real image URL */
+  /** Real image URL (first photo = cover) */
   image?: string;
+  /** Sublet has an optional tour video on the detail page */
+  hasListingVideo?: boolean;
 
   // Filter properties
   itemCategory?: string;
@@ -57,6 +60,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const router = useRouter();
   const { bounceKey, bounceProps, triggerBounce } = useFavoriteBounce();
   const favorited = isFavorite(listing.id);
+  const hasReviews = (listing.reviewCount ?? 0) > 0 && listing.rating != null;
+  const ratingLabel = formatCardRatingLabel({
+    rating: listing.rating,
+    reviewCount: listing.reviewCount ?? 0,
+  });
   const href =
     listing.type === "sublet"
       ? `/sublet/${listing.id}`
@@ -96,6 +104,15 @@ export default function ListingCard({ listing }: ListingCardProps) {
           {!listing.image && listing.emoji && (
             <div className="absolute inset-0 flex items-center justify-center opacity-25">
               <span className="text-5xl">{listing.emoji}</span>
+            </div>
+          )}
+
+          {listing.hasListingVideo && (
+            <div className="absolute bottom-2.5 right-2.5 pointer-events-none">
+              <span className="inline-flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] font-medium text-[#1f2933] shadow-sm border border-white/80">
+                <span aria-hidden>🎬</span>
+                看房视频
+              </span>
             </div>
           )}
 
@@ -147,14 +164,22 @@ export default function ListingCard({ listing }: ListingCardProps) {
             <h3 className="text-sm font-medium text-[#1f2933] leading-snug line-clamp-2 flex-1">
               {listing.title}
             </h3>
-            <div className="flex items-center gap-0.5 shrink-0 text-[13px] text-[#1f2933]">
-              <svg
-                className="w-3.5 h-3.5 text-[#1f2933] fill-[#1f2933]"
-                viewBox="0 0 20 20"
-              >
-                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-              </svg>
-              <span>{listing.rating.toFixed(1)}</span>
+            <div className="flex items-center gap-0.5 shrink-0 text-[13px]">
+              {hasReviews ? (
+                <>
+                  <svg
+                    className="w-3.5 h-3.5 text-[#1f2933] fill-[#1f2933]"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                  <span className="text-[#1f2933]">{ratingLabel}</span>
+                </>
+              ) : (
+                <span className="text-[11px] text-[#5a6b73]">
+                  {ratingLabel}
+                </span>
+              )}
             </div>
           </div>
 

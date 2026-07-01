@@ -176,8 +176,9 @@ export default function ProfilePage() {
                   >
                     <span>
                       ⭐{" "}
-                      {(userProfile?.reviewCount ?? 0) > 0
-                        ? (userProfile?.rating ?? 5.0).toFixed(1)
+                      {(userProfile?.reviewCount ?? 0) > 0 &&
+                      userProfile?.rating != null
+                        ? userProfile.rating.toFixed(1)
                         : "暂无评分"}
                     </span>
                     {(userProfile?.reviewCount ?? 0) > 0 && (
