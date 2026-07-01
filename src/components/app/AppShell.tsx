@@ -7,6 +7,7 @@ import { AppProvider } from "./AppContext";
 import BottomNav from "./BottomNav";
 import AppSidebar from "./AppSidebar";
 import RouteTransition from "@/components/motion/RouteTransition";
+import CallProvider from "@/components/call/CallProvider";
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -31,21 +32,23 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <AppProvider>
-      {!hideAppChrome && <AppSidebar />}
+      <CallProvider>
+        {!hideAppChrome && <AppSidebar />}
 
-      <div
-        className={`min-h-dvh flex flex-col ${hideAppChrome ? "" : "md:pl-16"}`}
-      >
-        <main
-          className={`overflow-x-clip ${hideBottomNav ? "" : "pb-20 md:pb-0"}`}
+        <div
+          className={`min-h-dvh flex flex-col ${hideAppChrome ? "" : "md:pl-16"}`}
         >
-          <RouteTransition>{children}</RouteTransition>
-        </main>
-      </div>
+          <main
+            className={`overflow-x-clip ${hideBottomNav ? "" : "pb-20 md:pb-0"}`}
+          >
+            <RouteTransition>{children}</RouteTransition>
+          </main>
+        </div>
 
-      <AnimatePresence initial={false}>
-        {!hideBottomNav && <BottomNav key="bottom-nav" />}
-      </AnimatePresence>
+        <AnimatePresence initial={false}>
+          {!hideBottomNav && <BottomNav key="bottom-nav" />}
+        </AnimatePresence>
+      </CallProvider>
     </AppProvider>
   );
 }

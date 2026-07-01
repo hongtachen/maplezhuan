@@ -28,7 +28,12 @@ export function getMessageAlign(
   if (
     msgType === "action_sold" ||
     msgType === "action_reserved" ||
-    msgType === "action_declined"
+    msgType === "action_declined" ||
+    msgType === "call_invite" ||
+    msgType === "call_ended" ||
+    msgType === "call_missed" ||
+    msgType === "call_declined" ||
+    msgType === "call_cancelled"
   ) {
     return "center";
   }

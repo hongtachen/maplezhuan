@@ -11,8 +11,10 @@ type Props = {
   onSendImage: (files: FileList) => void;
   onSendPickupTime: (date: string, timeSlot: string, note: string) => void;
   onShareContact: () => void;
+  onStartVoiceCall?: () => void;
   onPickupBlocked?: () => void;
   canSchedulePickup?: boolean;
+  voiceCallDisabled?: boolean;
   uploading?: boolean;
 };
 
@@ -23,8 +25,10 @@ export default function ChatInputBar({
   onSendImage,
   onSendPickupTime,
   onShareContact,
+  onStartVoiceCall,
   onPickupBlocked,
   canSchedulePickup = false,
+  voiceCallDisabled = false,
   uploading,
 }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -63,6 +67,29 @@ export default function ChatInputBar({
           uploading={uploading}
         />
         <div className="max-w-[800px] mx-auto flex items-center gap-3">
+          {onStartVoiceCall && (
+            <button
+              type="button"
+              onClick={onStartVoiceCall}
+              disabled={voiceCallDisabled || uploading}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-[#e6f4ed] text-[#2f9e6d] hover:bg-[#d4eddf] transition-colors shrink-0 disabled:opacity-50"
+              aria-label="语音通话"
+            >
+              <svg
+                className="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                />
+              </svg>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setSheetOpen(!sheetOpen)}

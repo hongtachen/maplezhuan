@@ -168,7 +168,12 @@ export type MessageType =
   | "review"
   | "image"
   | "pickup_time"
-  | "contact_share";
+  | "contact_share"
+  | "call_invite"
+  | "call_ended"
+  | "call_missed"
+  | "call_declined"
+  | "call_cancelled";
 
 export type MessageMetadata = {
   date?: string;
@@ -180,6 +185,8 @@ export type MessageMetadata = {
   pickupConfirmed?: boolean;
   pickupConfirmedBy?: string;
   offerPrice?: number;
+  callId?: string;
+  callDurationSec?: number;
 };
 
 export type MessageDocument = {
