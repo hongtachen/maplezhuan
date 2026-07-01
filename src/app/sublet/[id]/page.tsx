@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useApp } from "@/components/app/AppContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
+import { formatPhoneForDisplay } from "@/lib/phone/validatePhone";
 import {
   collection,
   query,
@@ -545,7 +546,9 @@ export default function SubletDetailPage() {
                         <span
                           className={`text-[14px] font-bold ${showPhone ? "text-[#1f2933] select-all cursor-text" : "text-[#2f9e6d]"}`}
                         >
-                          {showPhone ? seller.phone : "点击查看"}
+                          {showPhone
+                            ? formatPhoneForDisplay(seller.phone)
+                            : "点击查看"}
                         </span>
                       </button>
                     )}

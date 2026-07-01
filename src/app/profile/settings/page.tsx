@@ -10,6 +10,9 @@ import {
 } from "@/lib/firebase/users";
 import { useApp } from "@/components/app/AppContext";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
+import PhoneInput from "@/components/ui/PhoneInput";
+import { validateContactPair } from "@/lib/phone/validateContact";
+import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -27,6 +30,8 @@ export default function SettingsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [contactError, setContactError] = useState<string | undefined>();
+  const [phoneError, setPhoneError] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -61,10 +66,49 @@ export default function SettingsPage() {
       }
 
       if (userProfile.isVerifiedSeller) {
-        if (!wechat.trim() && !phone.trim()) {
-          showToast("请至少填写一项联系方式（微信号或手机号）", "warning");
+        const contactResult = validateContactPair({ phone, wechat });
+        if (!contactResult.ok) {
+          if (contactResult.field === "phone") {
+            setPhoneError(contactResult.error);
+            setContactError(undefined);
+          } else {
+            setContactError(contactResult.error);
+            setPhoneError(undefined);
+          }
+          showToast(contactResult.error, "warning");
           return;
         }
+
+        setContactError(undefined);
+        setPhoneError(undefined);
+
+        setIsSaving(true);
+        const updates: Partial<UserProfile> = {
+          nickname: nickname.trim(),
+          wechat: wechat.trim(),
+          phone: contactResult.phoneE164,
+          isPublicContact: isPublic,
+          emailNotifications: emailNotifications,
+        };
+
+        if (addressData) {
+          updates.defaultAddress = {
+            lat: addressData.lat,
+            lng: addressData.lng,
+            text: addressData.text,
+            showExactLocation: addressData.showExactLocation ?? true,
+          };
+        }
+
+        console.log("Saving settings updates:", updates);
+        await updateUserProfile(user.uid, updates);
+
+        useAuthStore.setState({
+          userProfile: { ...userProfile, ...updates },
+        });
+        showToast("资料已更新", "success");
+        router.back();
+        return;
       }
 
       setIsSaving(true);
@@ -321,7 +365,11 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       value={wechat}
-                      onChange={(e) => setWechat(e.target.value)}
+                      onChange={(e) => {
+                        setWechat(e.target.value);
+                        setContactError(undefined);
+                        setPhoneError(undefined);
+                      }}
                       placeholder="微信号"
                       className="w-full bg-[#f7f9fc] border border-transparent rounded-[16px] pl-11 pr-4 py-3 text-[15px] outline-none focus:bg-white focus:border-[#2f9e6d] transition-all text-[#1f2933]"
                     />
@@ -332,18 +380,28 @@ export default function SettingsPage() {
                     手机号
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] grayscale opacity-70">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] grayscale opacity-70 z-10 pointer-events-none">
                       📱
                     </span>
-                    <input
-                      type="tel"
+                    <PhoneInput
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="手机号"
-                      className="w-full bg-[#f7f9fc] border border-transparent rounded-[16px] pl-11 pr-4 py-3 text-[15px] outline-none focus:bg-white focus:border-[#2f9e6d] transition-all text-[#1f2933]"
+                      onChange={(value) => {
+                        setPhone(value);
+                        setContactError(undefined);
+                        setPhoneError(undefined);
+                      }}
+                      error={phoneError}
                     />
                   </div>
                 </div>
+                {contactError && (
+                  <p
+                    role="alert"
+                    className={`${inlineFeedback} ${FEEDBACK.error.text} px-1`}
+                  >
+                    {contactError}
+                  </p>
+                )}
 
                 {/* Privacy Toggle */}
                 <div className="pt-4 mt-2 border-t border-[rgba(31,41,51,0.04)]">

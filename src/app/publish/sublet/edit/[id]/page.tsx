@@ -16,6 +16,9 @@ import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import MoveInDateSelector from "@/components/ui/MoveInDateSelector";
 import { SubletDocument } from "@/lib/firebase/firestore";
 import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
+import PhoneInput from "@/components/ui/PhoneInput";
+import { validateContactPair } from "@/lib/phone/validateContact";
+import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
 
 const KNOWN_ROOM_TYPE_IDS = new Set([
   "studio",
@@ -61,7 +64,16 @@ export default function SubletEditPage() {
   const [description, setDescription] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactWechat, setContactWechat] = useState("");
+  const [contactError, setContactError] = useState<string | undefined>();
+  const [phoneError, setPhoneError] = useState<string | undefined>();
   const [utilitiesIncluded, setUtilitiesIncluded] = useState(false);
+
+  const subletPhoneInputClass = (hasError: boolean) =>
+    `w-full pl-12 pr-4 py-3.5 rounded-xl border outline-none transition-all text-[15px] ${
+      hasError
+        ? "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-1 focus:ring-rose-200"
+        : "border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d]"
+    }`;
   const [furnished, setFurnished] = useState(false);
 
   useEffect(() => {
@@ -150,10 +162,28 @@ export default function SubletEditPage() {
       showToast("请填写自定义房型", "error");
       return;
     }
-    if (!price || (!contactPhone && !contactWechat)) {
-      showToast("请填写价格并提供至少一种联系方式", "error");
+    if (!price) {
+      showToast("请填写价格", "error");
       return;
     }
+    const contactResult = validateContactPair({
+      phone: contactPhone,
+      wechat: contactWechat,
+    });
+    if (!contactResult.ok) {
+      if (contactResult.field === "phone") {
+        setPhoneError(contactResult.error);
+        setContactError(undefined);
+      } else {
+        setContactError(contactResult.error);
+        setPhoneError(undefined);
+      }
+      showToast(contactResult.error, "error");
+      return;
+    }
+    setContactError(undefined);
+    setPhoneError(undefined);
+    const contactPhoneE164 = contactResult.phoneE164;
 
     if (!user?.uid) {
       showToast("请先登录", "error");
@@ -196,7 +226,7 @@ export default function SubletEditPage() {
         utilitiesIncluded,
         furnished,
         description,
-        contactPhone,
+        contactPhone: contactPhoneE164,
         contactWechat,
       };
 
@@ -598,14 +628,27 @@ export default function SubletEditPage() {
                       />
                     </svg>
                   </div>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    placeholder="手机号码"
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d] outline-none transition-all text-[15px]"
+                    onChange={(value) => {
+                      setContactPhone(value);
+                      setContactError(undefined);
+                      setPhoneError(undefined);
+                    }}
+                    error={phoneError}
+                    className={subletPhoneInputClass(
+                      !!contactError || !!phoneError,
+                    )}
                   />
                 </div>
+                {contactError && (
+                  <p
+                    role="alert"
+                    className={`${inlineFeedback} ${FEEDBACK.error.text} px-1`}
+                  >
+                    {contactError}
+                  </p>
+                )}
                 <div className="relative">
                   <div className="absolute left-4 top-3.5 text-[#5a6b73]">
                     <svg
@@ -625,7 +668,11 @@ export default function SubletEditPage() {
                   <input
                     type="text"
                     value={contactWechat}
-                    onChange={(e) => setContactWechat(e.target.value)}
+                    onChange={(e) => {
+                      setContactWechat(e.target.value);
+                      setContactError(undefined);
+                      setPhoneError(undefined);
+                    }}
                     placeholder="微信号"
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d] outline-none transition-all text-[15px]"
                   />

@@ -10,6 +10,9 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
 import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
 import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
+import PhoneInput from "@/components/ui/PhoneInput";
+import { validateContactPair } from "@/lib/phone/validateContact";
+import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
 
 export default function SubletStep4Page() {
   const router = useRouter();
@@ -19,6 +22,15 @@ export default function SubletStep4Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("正在上传，请稍候...");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [contactError, setContactError] = useState<string | undefined>();
+  const [phoneError, setPhoneError] = useState<string | undefined>();
+
+  const subletPhoneInputClass = (hasError: boolean) =>
+    `w-full pl-12 pr-4 py-3.5 rounded-xl border outline-none transition-all text-sm ${
+      hasError
+        ? "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-1 focus:ring-rose-200"
+        : "border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d]"
+    }`;
 
   const handlePublishSuccessBrowse = useCallback(() => {
     setShowSuccess(false);
@@ -36,10 +48,24 @@ export default function SubletStep4Page() {
       return;
     }
 
-    if (!subletData.contactPhone && !subletData.contactWechat) {
-      showToast("请至少提供一种联系方式（手机或微信）", "error");
+    const contactResult = validateContactPair({
+      phone: subletData.contactPhone,
+      wechat: subletData.contactWechat,
+    });
+    if (!contactResult.ok) {
+      if (contactResult.field === "phone") {
+        setPhoneError(contactResult.error);
+        setContactError(undefined);
+      } else {
+        setContactError(contactResult.error);
+        setPhoneError(undefined);
+      }
+      showToast(contactResult.error, "error");
       return;
     }
+    setContactError(undefined);
+    setPhoneError(undefined);
+    const contactPhoneE164 = contactResult.phoneE164;
 
     if (!user) {
       showToast("请先登录", "error");
@@ -123,7 +149,7 @@ export default function SubletStep4Page() {
         price: subletData.price || 0,
         utilitiesIncluded: subletData.utilitiesIncluded || false,
         furnished: subletData.furnished || false,
-        contactPhone: subletData.contactPhone || "",
+        contactPhone: contactPhoneE164,
         contactWechat: subletData.contactWechat || "",
         description: subletData.description || "",
         images: uploadedImageUrls,
@@ -291,16 +317,27 @@ export default function SubletStep4Page() {
                       />
                     </svg>
                   </div>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     value={subletData.contactPhone}
-                    onChange={(e) =>
-                      setSubletData({ contactPhone: e.target.value })
-                    }
-                    placeholder="手机号码"
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d] outline-none transition-all text-sm"
+                    onChange={(value) => {
+                      setSubletData({ contactPhone: value });
+                      setContactError(undefined);
+                      setPhoneError(undefined);
+                    }}
+                    error={phoneError}
+                    className={subletPhoneInputClass(
+                      !!contactError || !!phoneError,
+                    )}
                   />
                 </div>
+                {contactError && (
+                  <p
+                    role="alert"
+                    className={`${inlineFeedback} ${FEEDBACK.error.text} px-1`}
+                  >
+                    {contactError}
+                  </p>
+                )}
                 <div className="relative">
                   <div className="absolute left-4 top-3.5 text-[#5a6b73]">
                     <svg
@@ -320,9 +357,11 @@ export default function SubletStep4Page() {
                   <input
                     type="text"
                     value={subletData.contactWechat}
-                    onChange={(e) =>
-                      setSubletData({ contactWechat: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setSubletData({ contactWechat: e.target.value });
+                      setContactError(undefined);
+                      setPhoneError(undefined);
+                    }}
                     placeholder="微信号"
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d] outline-none transition-all text-sm"
                   />

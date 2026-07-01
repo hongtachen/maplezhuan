@@ -9,9 +9,12 @@ import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import { useApp } from "@/components/app/AppContext";
 import FadeModal from "@/components/motion/FadeModal";
 import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
+import PhoneInput from "@/components/ui/PhoneInput";
+import { validateContactPair } from "@/lib/phone/validateContact";
 
 type FormErrors = {
   contact?: string;
+  phone?: string;
   agreement?: string;
 };
 
@@ -41,12 +44,17 @@ export default function SellerOnboardingPage() {
   const handleSubmit = async () => {
     setErrors({});
 
-    if (!wechat && !phone) {
-      const message = "请至少填写一项联系方式（微信号或手机号）以便平台备案。";
-      setErrors({ contact: message });
-      showToast(message, "info");
+    const contactResult = validateContactPair({ phone, wechat });
+    if (!contactResult.ok) {
+      if (contactResult.field === "phone") {
+        setErrors({ phone: contactResult.error });
+      } else {
+        setErrors({ contact: contactResult.error });
+      }
+      showToast(contactResult.error, "info");
       return;
     }
+    const phoneE164 = contactResult.phoneE164;
     if (!agreed) {
       const message = "请阅读并同意卖家规范承诺";
       setErrors({ agreement: message });
@@ -68,7 +76,7 @@ export default function SellerOnboardingPage() {
       const updates: Partial<UserProfile> = {
         isVerifiedSeller: true,
         wechat,
-        phone,
+        phone: phoneE164,
         isPublicContact: isPublic,
       };
 
@@ -89,7 +97,7 @@ export default function SellerOnboardingPage() {
           ...userProfile,
           isVerifiedSeller: true,
           wechat,
-          phone,
+          phone: phoneE164,
           isPublicContact: isPublic,
           defaultAddress: updates.defaultAddress || userProfile.defaultAddress,
         },
@@ -207,8 +215,12 @@ export default function SellerOnboardingPage() {
                     value={wechat}
                     onChange={(e) => {
                       setWechat(e.target.value);
-                      if (errors.contact) {
-                        setErrors((prev) => ({ ...prev, contact: undefined }));
+                      if (errors.contact || errors.phone) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          contact: undefined,
+                          phone: undefined,
+                        }));
                       }
                     }}
                     placeholder="微信号"
@@ -216,20 +228,25 @@ export default function SellerOnboardingPage() {
                   />
                 </div>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] grayscale opacity-70">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] grayscale opacity-70 z-10 pointer-events-none">
                     📱
                   </span>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      if (errors.contact) {
-                        setErrors((prev) => ({ ...prev, contact: undefined }));
+                    onChange={(value) => {
+                      setPhone(value);
+                      if (errors.contact || errors.phone) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          contact: undefined,
+                          phone: undefined,
+                        }));
                       }
                     }}
-                    placeholder="手机号"
-                    className={contactInputClass(!!errors.contact)}
+                    error={errors.phone}
+                    className={contactInputClass(
+                      !!errors.contact || !!errors.phone,
+                    )}
                   />
                 </div>
                 {errors.contact && (
