@@ -12,9 +12,11 @@ type Props = {
   onSendPickupTime: (date: string, timeSlot: string, note: string) => void;
   onShareContact: () => void;
   onStartVoiceCall?: () => void;
+  onStartVideoCall?: () => void;
   onPickupBlocked?: () => void;
   canSchedulePickup?: boolean;
   voiceCallDisabled?: boolean;
+  videoCallDisabled?: boolean;
   uploading?: boolean;
 };
 
@@ -26,9 +28,11 @@ export default function ChatInputBar({
   onSendPickupTime,
   onShareContact,
   onStartVoiceCall,
+  onStartVideoCall,
   onPickupBlocked,
   canSchedulePickup = false,
   voiceCallDisabled = false,
+  videoCallDisabled = false,
   uploading,
 }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -67,6 +71,29 @@ export default function ChatInputBar({
           uploading={uploading}
         />
         <div className="max-w-[800px] mx-auto flex items-center gap-3">
+          {onStartVideoCall && (
+            <button
+              type="button"
+              onClick={onStartVideoCall}
+              disabled={videoCallDisabled || uploading}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-[#e8f0ff] text-[#3b6fd9] hover:bg-[#d6e4ff] transition-colors shrink-0 disabled:opacity-50"
+              aria-label="视频看房"
+            >
+              <svg
+                className="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            </button>
+          )}
           {onStartVoiceCall && (
             <button
               type="button"

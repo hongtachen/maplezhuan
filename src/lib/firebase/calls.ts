@@ -7,15 +7,16 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { db } from "./config";
-import type { CallDocument, CallStatus } from "@/lib/calls/types";
+import type { CallDocument, CallStatus, CallMode } from "@/lib/calls/types";
 import type { CallChatMsgType } from "@/lib/calls/messages";
 
-export async function createVoiceCall(params: {
+export async function createCall(params: {
   chatId: string;
   callerId: string;
   calleeId: string;
   callerName?: string;
   calleeName?: string;
+  callMode: CallMode;
   itemId?: string;
   itemType?: "item" | "sublet";
 }): Promise<{ callId: string; roomName: string }> {
@@ -29,6 +30,7 @@ export async function createVoiceCall(params: {
     calleeId: params.calleeId,
     callerName: params.callerName || "",
     calleeName: params.calleeName || "",
+    callMode: params.callMode,
     itemId: params.itemId || null,
     itemType: params.itemType || null,
     status: "ringing" satisfies CallStatus,
@@ -73,6 +75,7 @@ export async function addCallChatMessage(params: {
   msgType: CallChatMsgType;
   text: string;
   callId: string;
+  callMode?: CallMode;
   durationSec?: number;
 }): Promise<void> {
   await addDoc(collection(db, "messages"), {
@@ -82,6 +85,7 @@ export async function addCallChatMessage(params: {
     msgType: params.msgType,
     metadata: {
       callId: params.callId,
+      callMode: params.callMode ?? "voice",
       ...(params.durationSec != null
         ? { callDurationSec: params.durationSec }
         : {}),

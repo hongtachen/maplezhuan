@@ -283,6 +283,7 @@ export default function MessageBubble({
   ) {
     const callText = formatCallMessageForViewer(msg.msgType, isMe, {
       durationSec: msg.metadata?.callDurationSec,
+      callMode: msg.metadata?.callMode,
     });
     const icon =
       msg.msgType === "call_invite"

@@ -187,6 +187,7 @@ export type MessageMetadata = {
   offerPrice?: number;
   callId?: string;
   callDurationSec?: number;
+  callMode?: "voice" | "video";
 };
 
 export type MessageDocument = {

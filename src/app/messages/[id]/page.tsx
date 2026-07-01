@@ -64,7 +64,7 @@ export default function ChatPage() {
   const chatId = params.id as string;
   const { user } = useAuthStore();
   const { showToast } = useApp();
-  const { startVoiceCall, isInCall } = useCall();
+  const { startVoiceCall, startVideoCall, isInCall } = useCall();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [messageFeed, setMessageFeed] = useState<MessageFeed>({
@@ -560,6 +560,23 @@ export default function ChatPage() {
     }
   };
 
+  const handleStartVideoCall = async () => {
+    if (!user || !chat || !otherUser || itemType !== "sublet") return;
+    const otherUserId =
+      chat.participants.find((p) => p !== user.uid) || chat.participants[0];
+    try {
+      await startVideoCall({
+        chatId,
+        calleeId: otherUserId,
+        calleeName: otherUser.nickname,
+        itemId: chat.itemId,
+        itemType: "sublet",
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleConfirmPickup = async (msgId: string) => {
     if (!user) return;
     try {
@@ -725,7 +742,11 @@ export default function ChatPage() {
         onSendPickupTime={handleSendPickupTime}
         onShareContact={handleShareContact}
         onStartVoiceCall={handleStartVoiceCall}
+        onStartVideoCall={
+          itemType === "sublet" ? handleStartVideoCall : undefined
+        }
         voiceCallDisabled={isInCall || !otherUser}
+        videoCallDisabled={isInCall || !otherUser}
         onPickupBlocked={() =>
           showToast("请先完成预留或交易确认，再约定取货时间", "info")
         }

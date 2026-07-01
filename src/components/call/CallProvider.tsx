@@ -26,8 +26,9 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
 import type {
   CallDocument,
+  CallMode,
   CallStatus,
-  StartVoiceCallParams,
+  StartCallParams,
 } from "@/lib/calls/types";
 import {
   formatCallMessageForViewer,
@@ -37,13 +38,24 @@ import {
 } from "@/lib/calls/messages";
 import {
   addCallChatMessage,
-  createVoiceCall,
+  createCall,
   updateCallStatus,
 } from "@/lib/firebase/calls";
 import { fetchLiveKitToken } from "@/lib/calls/livekit";
 import { setupRoomAudio, unlockRoomAudio } from "@/lib/calls/roomAudio";
+import {
+  canFlipLocalCamera,
+  flipLocalCamera,
+  getLocalCameraFacing,
+  getRoomVideoCaptureDefaults,
+  getVideoCaptureOptions,
+  subscribeDeviceOrientation,
+  syncLocalCameraOrientation,
+  type CameraFacing,
+} from "@/lib/calls/camera";
 import IncomingCallOverlay from "@/components/call/IncomingCallOverlay";
 import ActiveVoiceCall from "@/components/call/ActiveVoiceCall";
+import ActiveVideoCall from "@/components/call/ActiveVideoCall";
 
 const RING_TIMEOUT_MS = 30_000;
 
@@ -51,7 +63,8 @@ type CallPhase = "idle" | "outgoing" | "incoming" | "active";
 
 type CallContextValue = {
   phase: CallPhase;
-  startVoiceCall: (params: StartVoiceCallParams) => Promise<void>;
+  startVoiceCall: (params: StartCallParams) => Promise<void>;
+  startVideoCall: (params: StartCallParams) => Promise<void>;
   isInCall: boolean;
 };
 
@@ -79,6 +92,9 @@ export default function CallProvider({ children }: { children: ReactNode }) {
   const [peerName, setPeerName] = useState("");
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [isCameraOff, setIsCameraOff] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<CameraFacing>("user");
+  const [canFlipCamera, setCanFlipCamera] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -108,6 +124,9 @@ export default function CallProvider({ children }: { children: ReactNode }) {
     setStartedAtMs(null);
     setWatchedCallId(null);
     setIsMuted(false);
+    setIsCameraOff(false);
+    setCameraFacing("user");
+    setCanFlipCamera(false);
     setAudioBlocked(false);
   }, []);
 
@@ -135,37 +154,51 @@ export default function CallProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const connectRoom = useCallback(async (callId: string) => {
-    const { token, url } = await fetchLiveKitToken(callId);
-    const room = new Room({
-      adaptiveStream: true,
-      dynacast: true,
-    });
-    roomRef.current = room;
+  const connectRoom = useCallback(
+    async (callId: string, callMode: CallMode) => {
+      const { token, url } = await fetchLiveKitToken(callId);
+      const room = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+        videoCaptureDefaults: getRoomVideoCaptureDefaults(),
+      });
+      roomRef.current = room;
 
-    room.on(RoomEvent.Disconnected, () => {
-      if (roomRef.current === room) {
-        roomRef.current = null;
+      room.on(RoomEvent.Disconnected, () => {
+        if (roomRef.current === room) {
+          roomRef.current = null;
+        }
+      });
+
+      room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+        setAudioBlocked(!room.canPlaybackAudio);
+      });
+
+      roomAudioCleanupRef.current = setupRoomAudio(room);
+
+      await room.connect(url, token);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      setIsMuted(false);
+
+      if (callMode === "video") {
+        await room.localParticipant.setCameraEnabled(
+          true,
+          getVideoCaptureOptions("user"),
+        );
+        setIsCameraOff(false);
+        setCameraFacing("user");
+        void canFlipLocalCamera().then(setCanFlipCamera);
       }
-    });
 
-    room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
-      setAudioBlocked(!room.canPlaybackAudio);
-    });
-
-    roomAudioCleanupRef.current = setupRoomAudio(room);
-
-    await room.connect(url, token);
-    await room.localParticipant.setMicrophoneEnabled(true);
-    setIsMuted(false);
-
-    try {
-      await unlockRoomAudio(room);
-      setAudioBlocked(!room.canPlaybackAudio);
-    } catch {
-      setAudioBlocked(true);
-    }
-  }, []);
+      try {
+        await unlockRoomAudio(room);
+        setAudioBlocked(!room.canPlaybackAudio);
+      } catch {
+        setAudioBlocked(true);
+      }
+    },
+    [],
+  );
 
   const finalizeCall = useCallback(
     async (
@@ -174,17 +207,34 @@ export default function CallProvider({ children }: { children: ReactNode }) {
       options?: { notifyMessage?: boolean; durationSec?: number },
     ) => {
       if (!call.id || finalizedCallIdsRef.current.has(call.id)) return;
-      finalizedCallIdsRef.current.add(call.id);
 
       clearRingTimer();
-      await disconnectRoom();
 
       const snap = await getDoc(doc(db, "calls", call.id));
       const currentStatus = snap.data()?.status as CallStatus | undefined;
+
       if (currentStatus && isTerminalCallStatus(currentStatus)) {
         resetCallState();
         return;
       }
+
+      // Ring-timeout / cancel only apply while still ringing (ignore stale 30s timer).
+      if (
+        (status === "missed" ||
+          status === "cancelled" ||
+          status === "declined") &&
+        currentStatus &&
+        currentStatus !== "ringing"
+      ) {
+        return;
+      }
+
+      if (status === "ended" && currentStatus !== "active") {
+        return;
+      }
+
+      finalizedCallIdsRef.current.add(call.id);
+      await disconnectRoom();
 
       await updateCallStatus(call.id, status, {
         durationSec: options?.durationSec,
@@ -195,8 +245,10 @@ export default function CallProvider({ children }: { children: ReactNode }) {
       const shouldNotify = options?.notifyMessage !== false;
 
       if (shouldNotify && user) {
+        const callMode = call.callMode ?? "voice";
         const { msgType, text } = getCallSystemMessage(status, {
           durationSec: options?.durationSec,
+          callMode,
         });
 
         await addCallChatMessage({
@@ -205,11 +257,15 @@ export default function CallProvider({ children }: { children: ReactNode }) {
           msgType,
           text,
           callId: call.id,
+          callMode,
           durationSec: options?.durationSec,
         });
         await bumpChatLastMessage(
           call.chatId,
-          getCallChatListPreview(msgType, options?.durationSec),
+          getCallChatListPreview(msgType, {
+            durationSec: options?.durationSec,
+            callMode,
+          }),
           otherUserId,
         );
       }
@@ -262,7 +318,8 @@ export default function CallProvider({ children }: { children: ReactNode }) {
       }
 
       await updateCallStatus(call.id, "active");
-      await connectRoom(call.id);
+      const callMode = call.callMode ?? "voice";
+      await connectRoom(call.id, callMode);
       setIncomingCall(null);
       setActiveCall({ ...call, status: "active" });
       setPeerName(call.callerName || "对方");
@@ -314,37 +371,46 @@ export default function CallProvider({ children }: { children: ReactNode }) {
     }
   }, [activeCall, busy, finalizeCall, showToast]);
 
-  const startVoiceCall = useCallback(
-    async (params: StartVoiceCallParams) => {
+  const startCall = useCallback(
+    async (params: StartCallParams, callMode: CallMode) => {
       if (!user || busy) return;
       if (phase !== "idle") {
         showToast("当前已有通话进行中", "info");
         return;
       }
 
+      if (callMode === "video" && params.itemType !== "sublet") {
+        showToast("视频看房仅支持转租对话", "info");
+        return;
+      }
+
       setBusy(true);
       try {
-        const { callId } = await createVoiceCall({
+        const { callId } = await createCall({
           chatId: params.chatId,
           callerId: user.uid,
           calleeId: params.calleeId,
           callerName: userProfile?.nickname || user.displayName || "用户",
           calleeName: params.calleeName,
+          callMode,
           itemId: params.itemId,
           itemType: params.itemType,
         });
 
-        const inviteText = formatCallMessageForViewer("call_invite", true);
+        const inviteText = formatCallMessageForViewer("call_invite", true, {
+          callMode,
+        });
         await addCallChatMessage({
           chatId: params.chatId,
           senderId: user.uid,
           msgType: "call_invite",
           text: inviteText,
           callId,
+          callMode,
         });
         await bumpChatLastMessage(
           params.chatId,
-          getCallChatListPreview("call_invite"),
+          getCallChatListPreview("call_invite", { callMode }),
           params.calleeId,
         );
 
@@ -356,6 +422,7 @@ export default function CallProvider({ children }: { children: ReactNode }) {
           calleeId: params.calleeId,
           callerName: userProfile?.nickname,
           calleeName: params.calleeName,
+          callMode,
           status: "ringing",
           itemId: params.itemId,
           itemType: params.itemType,
@@ -366,9 +433,10 @@ export default function CallProvider({ children }: { children: ReactNode }) {
         setPhase("outgoing");
         setWatchedCallId(callId);
 
-        await connectRoom(callId);
+        await connectRoom(callId, callMode);
 
         ringTimerRef.current = window.setTimeout(() => {
+          if (phaseRef.current !== "outgoing") return;
           void finalizeCall(call, "missed");
         }, RING_TIMEOUT_MS);
       } catch (e) {
@@ -392,6 +460,16 @@ export default function CallProvider({ children }: { children: ReactNode }) {
       user,
       userProfile,
     ],
+  );
+
+  const startVoiceCall = useCallback(
+    (params: StartCallParams) => startCall(params, "voice"),
+    [startCall],
+  );
+
+  const startVideoCall = useCallback(
+    (params: StartCallParams) => startCall(params, "video"),
+    [startCall],
   );
 
   // Discover new incoming ringing calls (idle only).
@@ -445,11 +523,13 @@ export default function CallProvider({ children }: { children: ReactNode }) {
       const call = mapCallDoc(snap.id, snap.data());
       const currentPhase = phaseRef.current;
 
-      if (call.status === "active" && currentPhase === "outgoing") {
+      if (call.status === "active") {
         clearRingTimer();
-        setActiveCall(call);
-        setStartedAtMs(Date.now());
-        setPhase("active");
+        if (currentPhase === "outgoing") {
+          setActiveCall(call);
+          setStartedAtMs(Date.now());
+          setPhase("active");
+        }
         return;
       }
 
@@ -480,6 +560,27 @@ export default function CallProvider({ children }: { children: ReactNode }) {
   ]);
 
   useEffect(() => {
+    if (phase !== "active" || activeCall?.callMode !== "video") return;
+    const room = roomRef.current;
+    if (!room) return;
+    void canFlipLocalCamera().then(setCanFlipCamera);
+    setCameraFacing(getLocalCameraFacing(room));
+  }, [phase, activeCall?.callMode, startedAtMs]);
+
+  // Re-sync camera capture when the phone is rotated during a video call.
+  useEffect(() => {
+    if (phase !== "active" || activeCall?.callMode !== "video" || isCameraOff) {
+      return;
+    }
+
+    return subscribeDeviceOrientation(() => {
+      const room = roomRef.current;
+      if (!room) return;
+      void syncLocalCameraOrientation(room, cameraFacing);
+    });
+  }, [activeCall?.callMode, cameraFacing, isCameraOff, phase]);
+
+  useEffect(() => {
     return () => {
       clearRingTimer();
       void disconnectRoom();
@@ -488,12 +589,16 @@ export default function CallProvider({ children }: { children: ReactNode }) {
 
   const showIncoming = phase === "incoming" && !!incomingCall;
   const showActive = phase === "outgoing" || phase === "active";
+  const activeCallMode =
+    activeCall?.callMode ?? incomingCall?.callMode ?? "voice";
+  const isVideoCall = activeCallMode === "video";
 
   return (
     <CallContext.Provider
       value={{
         phase,
         startVoiceCall,
+        startVideoCall,
         isInCall: phase !== "idle",
       }}
     >
@@ -501,42 +606,111 @@ export default function CallProvider({ children }: { children: ReactNode }) {
       <IncomingCallOverlay
         open={showIncoming}
         callerName={incomingCall?.callerName || "对方"}
+        callMode={incomingCall?.callMode}
         onAccept={acceptIncoming}
         onDecline={declineIncoming}
         busy={busy}
       />
-      <ActiveVoiceCall
-        open={showActive}
-        peerName={peerName}
-        startedAtMs={phase === "active" ? startedAtMs : null}
-        isMuted={isMuted}
-        audioBlocked={audioBlocked}
-        onUnlockAudio={async () => {
-          const room = roomRef.current;
-          if (!room) return;
-          try {
-            await unlockRoomAudio(room);
-            setAudioBlocked(!room.canPlaybackAudio);
-          } catch {
-            showToast("无法播放对方声音，请检查浏览器权限", "error");
-          }
-        }}
-        onToggleMute={async () => {
-          const room = roomRef.current;
-          if (!room) return;
-          const next = !isMuted;
-          await room.localParticipant.setMicrophoneEnabled(!next);
-          setIsMuted(next);
-        }}
-        onEnd={async () => {
-          if (phase === "outgoing") {
-            await cancelOutgoingCall();
-            return;
-          }
-          await endActiveCall();
-        }}
-        ending={busy}
-      />
+      {isVideoCall ? (
+        <ActiveVideoCall
+          open={showActive}
+          peerName={peerName}
+          callMode="video"
+          startedAtMs={phase === "active" ? startedAtMs : null}
+          isMuted={isMuted}
+          isCameraOff={isCameraOff}
+          cameraFacing={cameraFacing}
+          canFlipCamera={canFlipCamera}
+          audioBlocked={audioBlocked}
+          roomRef={roomRef}
+          onUnlockAudio={async () => {
+            const room = roomRef.current;
+            if (!room) return;
+            try {
+              await unlockRoomAudio(room);
+              setAudioBlocked(!room.canPlaybackAudio);
+            } catch {
+              showToast("无法播放对方声音，请检查浏览器权限", "error");
+            }
+          }}
+          onToggleMute={async () => {
+            const room = roomRef.current;
+            if (!room) return;
+            const next = !isMuted;
+            await room.localParticipant.setMicrophoneEnabled(!next);
+            setIsMuted(next);
+          }}
+          onToggleCamera={async () => {
+            const room = roomRef.current;
+            if (!room) return;
+            if (isCameraOff) {
+              await room.localParticipant.setCameraEnabled(
+                true,
+                getVideoCaptureOptions(cameraFacing),
+              );
+              setIsCameraOff(false);
+            } else {
+              await room.localParticipant.setCameraEnabled(false);
+              setIsCameraOff(true);
+            }
+          }}
+          onFlipCamera={async () => {
+            const room = roomRef.current;
+            if (!room || isCameraOff) return;
+            try {
+              const next = await flipLocalCamera(room);
+              setCameraFacing(next);
+            } catch (e) {
+              console.error(e);
+              showToast(
+                e instanceof Error ? e.message : "无法切换摄像头",
+                "error",
+              );
+            }
+          }}
+          onEnd={async () => {
+            if (phase === "outgoing") {
+              await cancelOutgoingCall();
+              return;
+            }
+            await endActiveCall();
+          }}
+          ending={busy}
+        />
+      ) : (
+        <ActiveVoiceCall
+          open={showActive}
+          peerName={peerName}
+          startedAtMs={phase === "active" ? startedAtMs : null}
+          isMuted={isMuted}
+          audioBlocked={audioBlocked}
+          onUnlockAudio={async () => {
+            const room = roomRef.current;
+            if (!room) return;
+            try {
+              await unlockRoomAudio(room);
+              setAudioBlocked(!room.canPlaybackAudio);
+            } catch {
+              showToast("无法播放对方声音，请检查浏览器权限", "error");
+            }
+          }}
+          onToggleMute={async () => {
+            const room = roomRef.current;
+            if (!room) return;
+            const next = !isMuted;
+            await room.localParticipant.setMicrophoneEnabled(!next);
+            setIsMuted(next);
+          }}
+          onEnd={async () => {
+            if (phase === "outgoing") {
+              await cancelOutgoingCall();
+              return;
+            }
+            await endActiveCall();
+          }}
+          ending={busy}
+        />
+      )}
     </CallContext.Provider>
   );
 }

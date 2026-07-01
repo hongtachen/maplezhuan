@@ -4,11 +4,14 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import CallWaveAvatar from "@/components/call/CallWaveAvatar";
+import { getIncomingCallSubtitle } from "@/lib/calls/messages";
+import type { CallMode } from "@/lib/calls/types";
 import { DURATION, EASE } from "@/lib/motion/tokens";
 
 type Props = {
   open: boolean;
   callerName: string;
+  callMode?: CallMode;
   onAccept: () => void;
   onDecline: () => void;
   busy?: boolean;
@@ -17,6 +20,7 @@ type Props = {
 export default function IncomingCallOverlay({
   open,
   callerName,
+  callMode,
   onAccept,
   onDecline,
   busy,
@@ -53,7 +57,9 @@ export default function IncomingCallOverlay({
             <p className="mt-5 text-lg font-bold text-[#1f2933]">
               {callerName}
             </p>
-            <p className="mt-1 text-sm text-[#5a6b73]">语音来电</p>
+            <p className="mt-1 text-sm text-[#5a6b73]">
+              {getIncomingCallSubtitle(callMode)}
+            </p>
             {busy ? (
               <div className="mt-8">
                 <LoadingSpinner size="md" />

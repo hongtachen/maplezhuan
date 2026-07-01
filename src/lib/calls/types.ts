@@ -6,6 +6,8 @@ export type CallStatus =
   | "declined"
   | "cancelled";
 
+export type CallMode = "voice" | "video";
+
 export type CallDocument = {
   id?: string;
   chatId: string;
@@ -15,6 +17,7 @@ export type CallDocument = {
   callerName?: string;
   calleeName?: string;
   status: CallStatus;
+  callMode?: CallMode;
   itemId?: string;
   itemType?: "item" | "sublet";
   startedAt?: { seconds: number };
@@ -23,7 +26,7 @@ export type CallDocument = {
   durationSec?: number;
 };
 
-export type StartVoiceCallParams = {
+export type StartCallParams = {
   chatId: string;
   calleeId: string;
   calleeName?: string;
