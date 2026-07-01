@@ -9,6 +9,7 @@ import { addSublet } from "@/lib/firebase/firestore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
 import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
+import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
 
 export default function SubletStep4Page() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function SubletStep4Page() {
   const { user } = useAuthStore();
   const { showToast } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("正在上传，请稍候...");
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handlePublishSuccessBrowse = useCallback(() => {
@@ -46,6 +48,7 @@ export default function SubletStep4Page() {
 
     try {
       setIsSubmitting(true);
+      setUploadMessage("正在上传照片...");
 
       let uploadedImageUrls: string[] = [];
       if (subletData.images && subletData.images.length > 0) {
@@ -68,6 +71,7 @@ export default function SubletStep4Page() {
 
       if (subletData.video) {
         if (subletData.video instanceof File) {
+          setUploadMessage("正在上传视频，请勿关闭页面...");
           const validation = await validateVideoFileWithDuration(
             subletData.video,
           );
@@ -92,6 +96,8 @@ export default function SubletStep4Page() {
           videoDurationSec = subletData.videoDurationSec || undefined;
         }
       }
+
+      setUploadMessage("正在保存房源信息...");
 
       const resolvedRoomTypes = subletData.roomTypes?.includes("other")
         ? [subletData.customRoomType?.trim() || ""].filter(Boolean)
@@ -360,6 +366,11 @@ export default function SubletStep4Page() {
           </div>
         </div>
       </div>
+      <UploadProgressOverlay
+        open={isSubmitting}
+        title={uploadMessage}
+        description="上传完成前请勿关闭页面"
+      />
       <PublishSuccessOverlay
         open={showSuccess}
         message="房源发布成功！"

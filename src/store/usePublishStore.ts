@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import type { LocationData } from "@/components/ui/LocationPicker";
+import { clearAllFilePreviewUrls } from "@/lib/imagePreviewUrls";
+import { clearAllVideoPreviewUrls } from "@/lib/videoPreviewUrls";
 
 interface SubletFormData {
   title: string;
@@ -85,10 +87,17 @@ export const usePublishStore = create<PublishStore>((set) => ({
   subletData: initialSubletData,
   setSubletData: (data) =>
     set((state) => ({ subletData: { ...state.subletData, ...data } })),
-  clearSubletData: () => set({ subletData: initialSubletData }),
+  clearSubletData: () => {
+    clearAllFilePreviewUrls();
+    clearAllVideoPreviewUrls();
+    set({ subletData: initialSubletData });
+  },
 
   itemData: initialItemData,
   setItemData: (data) =>
     set((state) => ({ itemData: { ...state.itemData, ...data } })),
-  clearItemData: () => set({ itemData: initialItemData }),
+  clearItemData: () => {
+    clearAllFilePreviewUrls();
+    set({ itemData: initialItemData });
+  },
 }));

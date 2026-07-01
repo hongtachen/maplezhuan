@@ -13,6 +13,7 @@ import { getUserProfile, UserProfile } from "@/lib/firebase/users";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import { ItemDocument } from "@/lib/firebase/firestore";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
 
 function isPriceFilled(price: number | "" | undefined): boolean {
   return (
@@ -32,6 +33,7 @@ export default function ItemEditPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("正在上传照片...");
   const [showFreeConfirm, setShowFreeConfirm] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -132,6 +134,7 @@ export default function ItemEditPage() {
 
     try {
       setIsSubmitting(true);
+      setUploadMessage("正在上传照片...");
 
       // Upload images
       let uploadedImageUrls: string[] = [];
@@ -147,6 +150,8 @@ export default function ItemEditPage() {
         }
         uploadedImageUrls = [...existingUrls, ...newUrls];
       }
+
+      setUploadMessage("正在保存商品信息...");
 
       await updateDocument("items", id, {
         title,
@@ -392,7 +397,11 @@ export default function ItemEditPage() {
               <span className="block text-[11px] text-[#5a6b73] mb-5">
                 至少得上传2张图片
               </span>
-              <ImageUpload images={images} onImagesChange={setImages} />
+              <ImageUpload
+                images={images}
+                onImagesChange={setImages}
+                disabled={isSubmitting}
+              />
             </section>
           </div>
         </div>
@@ -429,6 +438,11 @@ export default function ItemEditPage() {
           </div>
         </div>
       </div>
+      <UploadProgressOverlay
+        open={isSubmitting}
+        title={uploadMessage}
+        description="上传完成前请勿关闭页面"
+      />
       <ConfirmDialog
         open={showFreeConfirm}
         onClose={() => setShowFreeConfirm(false)}

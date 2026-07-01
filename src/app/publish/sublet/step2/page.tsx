@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { usePublishStore } from "@/store/usePublishStore";
 import { useApp } from "@/components/app/AppContext";
+import MoveInDateSelector from "@/components/ui/MoveInDateSelector";
 
 export default function SubletStep2Page() {
   const router = useRouter();
@@ -197,67 +198,14 @@ export default function SubletStep2Page() {
             </section>
 
             {/* Move-in Date */}
-            <section className="mb-8">
+            <section className="mb-8 min-w-0">
               <h2 className="text-sm font-bold text-[#5a6b73] mb-4">
                 可入住时间
               </h2>
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => setSubletData({ moveInDate: "flexible" })}
-                  className={`p-4 rounded-xl border bg-white text-left transition-colors ${subletData.moveInDate === "flexible" ? "border-[#2f9e6d] ring-1 ring-[#2f9e6d]" : "border-[rgba(31,41,51,0.08)] hover:border-[#2f9e6d]"}`}
-                >
-                  <h3
-                    className={`font-bold mb-1 ${subletData.moveInDate === "flexible" ? "text-[#2f9e6d]" : "text-[#1f2933]"}`}
-                  >
-                    时间灵活
-                  </h3>
-                  <p
-                    className={`text-xs ${subletData.moveInDate === "flexible" ? "text-[#267a56]" : "text-[#5a6b73]"}`}
-                  >
-                    可与租客商量
-                  </p>
-                </button>
-                <div
-                  className={`p-4 rounded-xl border bg-white text-left transition-colors flex flex-col gap-3 ${subletData.moveInDate && subletData.moveInDate !== "flexible" ? "border-[#2f9e6d] ring-1 ring-[#2f9e6d]" : "border-[rgba(31,41,51,0.08)] hover:border-[#2f9e6d]"}`}
-                >
-                  <div
-                    className="flex items-center justify-between cursor-pointer"
-                    onClick={() =>
-                      setSubletData({
-                        moveInDate:
-                          subletData.moveInDate &&
-                          subletData.moveInDate !== "flexible"
-                            ? subletData.moveInDate
-                            : new Date().toISOString().split("T")[0],
-                      })
-                    }
-                  >
-                    <div>
-                      <h3
-                        className={`font-bold mb-1 ${subletData.moveInDate && subletData.moveInDate !== "flexible" ? "text-[#2f9e6d]" : "text-[#1f2933]"}`}
-                      >
-                        具体日期
-                      </h3>
-                      <p
-                        className={`text-xs ${subletData.moveInDate && subletData.moveInDate !== "flexible" ? "text-[#267a56]" : "text-[#5a6b73]"}`}
-                      >
-                        选择具体的入住时间
-                      </p>
-                    </div>
-                  </div>
-                  {subletData.moveInDate &&
-                    subletData.moveInDate !== "flexible" && (
-                      <input
-                        type="date"
-                        value={subletData.moveInDate}
-                        onChange={(e) =>
-                          setSubletData({ moveInDate: e.target.value })
-                        }
-                        className="w-full px-4 py-3 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] outline-none text-[15px] mt-2"
-                      />
-                    )}
-                </div>
-              </div>
+              <MoveInDateSelector
+                value={subletData.moveInDate || ""}
+                onChange={(moveInDate) => setSubletData({ moveInDate })}
+              />
             </section>
 
             {/* Renewable */}

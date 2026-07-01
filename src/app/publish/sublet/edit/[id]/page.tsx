@@ -12,7 +12,9 @@ import { db } from "@/lib/firebase/config";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
+import MoveInDateSelector from "@/components/ui/MoveInDateSelector";
 import { SubletDocument } from "@/lib/firebase/firestore";
+import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
 
 const KNOWN_ROOM_TYPE_IDS = new Set([
   "studio",
@@ -33,6 +35,7 @@ export default function SubletEditPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("正在上传照片...");
 
   const [title, setTitle] = useState("");
   const [propertyType, setPropertyType] = useState("");
@@ -150,6 +153,7 @@ export default function SubletEditPage() {
 
     try {
       setIsSubmitting(true);
+      setUploadMessage("正在上传照片...");
 
       let uploadedImageUrls: string[] = [];
       if (images && images.length > 0) {
@@ -192,6 +196,7 @@ export default function SubletEditPage() {
         updatePayload.videoPosterUrl = deleteField();
         updatePayload.videoDurationSec = deleteField();
       } else if (video instanceof File) {
+        setUploadMessage("正在上传视频，请勿关闭页面...");
         const validation = await validateVideoFileWithDuration(video);
         if (!validation.ok) {
           showToast(validation.error, "error");
@@ -216,6 +221,8 @@ export default function SubletEditPage() {
         updatePayload.videoUrl = video;
         if (videoDurationSec) updatePayload.videoDurationSec = videoDurationSec;
       }
+
+      setUploadMessage("正在保存房源信息...");
 
       await updateDocument("sublets", id, updatePayload);
 
@@ -483,62 +490,14 @@ export default function SubletEditPage() {
                     ))}
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-sm font-bold text-[#1f2933] mb-2">
                     入住时间 <span className="text-[#2f9e6d]">*</span>
                   </label>
-                  <div className="flex flex-col gap-3">
-                    <button
-                      onClick={() => setMoveInDate("flexible")}
-                      className={`p-4 rounded-xl border bg-white text-left transition-colors ${moveInDate === "flexible" ? "border-[#2f9e6d] ring-1 ring-[#2f9e6d]" : "border-[rgba(31,41,51,0.08)] hover:border-[#2f9e6d]"}`}
-                    >
-                      <h3
-                        className={`font-bold mb-1 ${moveInDate === "flexible" ? "text-[#2f9e6d]" : "text-[#1f2933]"}`}
-                      >
-                        时间灵活
-                      </h3>
-                      <p
-                        className={`text-xs ${moveInDate === "flexible" ? "text-[#267a56]" : "text-[#5a6b73]"}`}
-                      >
-                        可与租客商量
-                      </p>
-                    </button>
-                    <div
-                      className={`p-4 rounded-xl border bg-white text-left transition-colors flex flex-col gap-3 ${moveInDate && moveInDate !== "flexible" ? "border-[#2f9e6d] ring-1 ring-[#2f9e6d]" : "border-[rgba(31,41,51,0.08)] hover:border-[#2f9e6d]"}`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() =>
-                          setMoveInDate(
-                            moveInDate && moveInDate !== "flexible"
-                              ? moveInDate
-                              : new Date().toISOString().split("T")[0],
-                          )
-                        }
-                      >
-                        <div>
-                          <h3
-                            className={`font-bold mb-1 ${moveInDate && moveInDate !== "flexible" ? "text-[#2f9e6d]" : "text-[#1f2933]"}`}
-                          >
-                            具体日期
-                          </h3>
-                          <p
-                            className={`text-xs ${moveInDate && moveInDate !== "flexible" ? "text-[#267a56]" : "text-[#5a6b73]"}`}
-                          >
-                            选择具体的入住时间
-                          </p>
-                        </div>
-                      </div>
-                      {moveInDate && moveInDate !== "flexible" && (
-                        <input
-                          type="date"
-                          value={moveInDate}
-                          onChange={(e) => setMoveInDate(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] outline-none text-[15px] mt-2"
-                        />
-                      )}
-                    </div>
-                  </div>
+                  <MoveInDateSelector
+                    value={moveInDate}
+                    onChange={setMoveInDate}
+                  />
                 </div>
               </div>
             </section>
@@ -665,7 +624,11 @@ export default function SubletEditPage() {
 
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-[rgba(31,41,51,0.04)]">
               <h2 className="font-bold text-[#1f2933] mb-4">房源图片</h2>
-              <ImageUpload images={images} onImagesChange={setImages} />
+              <ImageUpload
+                images={images}
+                onImagesChange={setImages}
+                disabled={isSubmitting}
+              />
             </section>
 
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-[rgba(31,41,51,0.04)]">
@@ -676,6 +639,7 @@ export default function SubletEditPage() {
                   if (!v) setVideoDurationSec(null);
                 }}
                 onError={(message) => showToast(message, "error")}
+                disabled={isSubmitting}
               />
             </section>
           </div>
@@ -717,6 +681,11 @@ export default function SubletEditPage() {
           </div>
         </div>
       </div>
+      <UploadProgressOverlay
+        open={isSubmitting}
+        title={uploadMessage}
+        description="上传完成前请勿关闭页面"
+      />
     </div>
   );
 }

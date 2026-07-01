@@ -11,6 +11,7 @@ import { useApp } from "@/components/app/AppContext";
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
+import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 function isPriceFilled(price: number | "" | undefined): boolean {
@@ -32,6 +33,7 @@ export default function ItemPublishPage() {
   const { user } = useAuthStore();
   const { showToast } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("正在上传照片...");
   const [showSuccess, setShowSuccess] = useState(false);
   const [showFreeConfirm, setShowFreeConfirm] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -102,6 +104,7 @@ export default function ItemPublishPage() {
 
     try {
       setIsSubmitting(true);
+      setUploadMessage("正在上传照片...");
 
       // Upload images
       let uploadedImageUrls: string[] = [];
@@ -117,6 +120,8 @@ export default function ItemPublishPage() {
         const newUrls = await uploadMultipleImages(files, `items/${user.uid}`);
         uploadedImageUrls = [...existingUrls, ...newUrls];
       }
+
+      setUploadMessage("正在保存商品信息...");
 
       // Save to firestore
       await addItem({
@@ -384,6 +389,7 @@ export default function ItemPublishPage() {
               <ImageUpload
                 images={itemData.images}
                 onImagesChange={(images) => setItemData({ images })}
+                disabled={isSubmitting}
               />
             </section>
           </div>
@@ -423,6 +429,11 @@ export default function ItemPublishPage() {
           </div>
         </div>
       </div>
+      <UploadProgressOverlay
+        open={isSubmitting}
+        title={uploadMessage}
+        description="上传完成前请勿关闭页面"
+      />
       <PublishSuccessOverlay
         open={showSuccess}
         message="闲置发布成功！"
