@@ -77,6 +77,7 @@ export default function ItemPublishPage() {
       !itemData.title ||
       !isPriceFilled(itemData.price) ||
       !itemData.category ||
+      !itemData.condition ||
       !finalLocationData?.text ||
       !itemData.images ||
       itemData.images.length < 2
@@ -342,7 +343,7 @@ export default function ItemPublishPage() {
 
               <div>
                 <label className="block text-sm font-bold text-[#1f2933] mb-3">
-                  状态
+                  状态 <span className="text-[#2f9e6d]">*</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {conditions.map((c) => (

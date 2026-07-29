@@ -113,6 +113,7 @@ export default function ItemEditPage() {
       !title ||
       !isPriceFilled(price) ||
       !category ||
+      !condition ||
       !finalLocationData?.text
     ) {
       showToast("除了商品描述外，请填写所有必填信息", "error");
@@ -366,7 +367,7 @@ export default function ItemEditPage() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#1f2933] mb-3">
-                  状态
+                  状态 <span className="text-[#2f9e6d]">*</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {conditions.map((c) => (
