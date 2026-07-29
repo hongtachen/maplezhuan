@@ -586,14 +586,16 @@ export default function ListingDetailPage() {
                     基本讯息
                   </h2>
                   <div className="flex gap-4">
-                    <div className="bg-[#f3fbf7] px-4 py-2 rounded-xl">
-                      <span className="text-xs text-[#5a6b73] block mb-1">
-                        成色
-                      </span>
-                      <span className="text-sm font-bold text-[#2f9e6d]">
-                        {item.condition}
-                      </span>
-                    </div>
+                    {item.condition && (
+                      <div className="bg-[#f3fbf7] px-4 py-2 rounded-xl">
+                        <span className="text-xs text-[#5a6b73] block mb-1">
+                          成色
+                        </span>
+                        <span className="text-sm font-bold text-[#2f9e6d]">
+                          {item.condition}
+                        </span>
+                      </div>
+                    )}
                     <div className="bg-[#f3fbf7] px-4 py-2 rounded-xl">
                       <span className="text-xs text-[#5a6b73] block mb-1">
                         分类
