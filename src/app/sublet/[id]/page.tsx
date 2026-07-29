@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useApp } from "@/components/app/AppContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
@@ -37,19 +37,28 @@ import { formatMoveInDate } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
 
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 export default function SubletDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toggleFavorite, isFavorite } = useApp();
   const { user } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
 
   const id = params.id as string;
   const favorited = isFavorite(id);
   const { bounceKey, bounceProps, triggerBounce } = useFavoriteBounce();
 
   const [sublet, setSublet] = useState<SubletDocument | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const isLoading = loadedId !== id;
   const [showWechat, setShowWechat] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showBargainModal, setShowBargainModal] = useState(false);
@@ -63,8 +72,6 @@ export default function SubletDetailPage() {
 
   useEffect(() => {
     let cancelled = false;
-    setMounted(true);
-    setIsLoading(true);
 
     const fetchSublet = async () => {
       try {
@@ -75,11 +82,14 @@ export default function SubletDetailPage() {
           const data = { id: snap.id, ...snap.data() } as SubletDocument;
           setSublet(data);
           incrementListingViewsOnce("sublets", id);
+        } else {
+          setSublet(null);
         }
       } catch (e) {
         console.error(e);
+        if (!cancelled) setSublet(null);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setLoadedId(id);
       }
     };
     fetchSublet();

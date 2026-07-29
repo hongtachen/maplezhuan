@@ -277,7 +277,11 @@ export default function ActiveVideoCall({
               aria-label={isCameraOff ? "开启摄像头" : "关闭摄像头"}
             >
               {isCameraOff ? (
-                <img className="h-6 w-6" src="/camera-off-svgrepo-com.svg" />
+                <img
+                  className="h-6 w-6"
+                  src="/camera-off-svgrepo-com.svg"
+                  alt=""
+                />
               ) : (
                 "🎥"
               )}

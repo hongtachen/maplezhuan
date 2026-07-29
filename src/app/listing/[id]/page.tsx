@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useApp } from "@/components/app/AppContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
@@ -38,19 +38,28 @@ import { getCategoryLabel } from "@/lib/browseFilters";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
 
+function useIsClient() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toggleFavorite, isFavorite } = useApp();
   const { user } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
 
   const id = params.id as string;
   const favorited = isFavorite(id);
   const { bounceKey, bounceProps, triggerBounce } = useFavoriteBounce();
 
   const [item, setItem] = useState<ItemDocument | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const isLoading = loadedId !== id;
   const [showWechat, setShowWechat] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showBargainModal, setShowBargainModal] = useState(false);
@@ -66,8 +75,6 @@ export default function ListingDetailPage() {
   // Load listing once per id (not when auth resolves — avoids duplicate work)
   useEffect(() => {
     let cancelled = false;
-    setMounted(true);
-    setIsLoading(true);
 
     const fetchItem = async () => {
       try {
@@ -78,11 +85,14 @@ export default function ListingDetailPage() {
           const data = { id: snap.id, ...snap.data() } as ItemDocument;
           setItem(data);
           incrementListingViewsOnce("items", id);
+        } else {
+          setItem(null);
         }
       } catch (e) {
         console.error(e);
+        if (!cancelled) setItem(null);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setLoadedId(id);
       }
     };
     fetchItem();
