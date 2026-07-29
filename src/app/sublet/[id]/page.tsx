@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "@/components/app/AppContext";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { SubletDocument, recordHistory } from "@/lib/firebase/firestore";
+import { incrementListingViewsOnce } from "@/lib/listingViews";
 import { useSellerProfile, formatSellerRating } from "@/hooks/useSellerProfile";
 import LocationPicker from "@/components/ui/LocationPicker";
 import ListingImageGallery from "@/components/ui/ListingImageGallery";
@@ -42,7 +43,6 @@ export default function SubletDetailPage() {
   const { toggleFavorite, isFavorite } = useApp();
   const { user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
-  const hasIncrementedViews = useRef(false);
 
   const id = params.id as string;
   const favorited = isFavorite(id);
@@ -61,43 +61,46 @@ export default function SubletDetailPage() {
   const { profile: seller } = useSellerProfile(sublet?.sellerId);
   const sellerRating = formatSellerRating(seller);
 
-  // Prevent hydration mismatch for favorite button
   useEffect(() => {
+    let cancelled = false;
+    setMounted(true);
+    setIsLoading(true);
+
     const fetchSublet = async () => {
-      setMounted(true);
       try {
         const docRef = doc(db, "sublets", id);
         const snap = await getDoc(docRef);
+        if (cancelled) return;
         if (snap.exists()) {
           const data = { id: snap.id, ...snap.data() } as SubletDocument;
           setSublet(data);
-
-          if (!hasIncrementedViews.current) {
-            hasIncrementedViews.current = true;
-            updateDoc(docRef, { views: increment(1) }).catch(console.error);
-          }
-
-          if (user) {
-            recordHistory(user.uid, {
-              itemId: data.id,
-              itemTitle: data.title || "房屋转租",
-              itemPrice: data.price,
-              itemPriceUnit: "/月",
-              itemType: "sublet",
-              itemEmoji: "🏠",
-              itemGradientFrom: "#f0f9ff",
-              itemGradientTo: "#bae6fd",
-            });
-          }
+          incrementListingViewsOnce("sublets", id);
         }
       } catch (e) {
         console.error(e);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
     fetchSublet();
-  }, [id, user]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!user || !sublet?.id) return;
+    recordHistory(user.uid, {
+      itemId: sublet.id,
+      itemTitle: sublet.title || "房屋转租",
+      itemPrice: sublet.price,
+      itemPriceUnit: "/月",
+      itemType: "sublet",
+      itemEmoji: "🏠",
+      itemGradientFrom: "#f0f9ff",
+      itemGradientTo: "#bae6fd",
+    });
+  }, [user, sublet]);
 
   const handleAction = async (
     action: "contact" | "request_reserve",
@@ -117,16 +120,17 @@ export default function SubletDetailPage() {
 
     try {
       const chatsRef = collection(db, "chats");
-      const q = query(chatsRef, where("itemId", "==", id));
+      const q = query(
+        chatsRef,
+        where("participants", "array-contains", user.uid),
+        where("itemId", "==", id),
+      );
       const snap = await getDocs(q);
 
       let existingChatId = null;
       snap.forEach((docSnap) => {
         const data = docSnap.data();
-        if (
-          data.participants.includes(user.uid) &&
-          data.participants.includes(sublet!.sellerId)
-        ) {
+        if (data.participants.includes(sublet!.sellerId)) {
           existingChatId = docSnap.id;
         }
       });
