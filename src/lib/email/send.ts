@@ -1,5 +1,4 @@
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "@/lib/firebase/config";
+import { auth } from "@/lib/firebase/config";
 
 export async function sendEmail(
   to: string,
@@ -7,8 +6,25 @@ export async function sendEmail(
   html: string,
 ): Promise<void> {
   if (!to) return;
-  await addDoc(collection(db, "mail"), {
-    to,
-    message: { subject, html },
+
+  const user = auth.currentUser;
+  if (!user) {
+    console.warn("sendEmail skipped: not signed in");
+    return;
+  }
+
+  const token = await user.getIdToken();
+  const res = await fetch("/api/email/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ to, subject, html }),
   });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error("sendEmail failed:", res.status, detail);
+  }
 }

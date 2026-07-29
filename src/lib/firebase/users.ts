@@ -42,6 +42,12 @@ export async function createUserProfile(
   data: CreateProfileParams,
 ): Promise<void> {
   const docRef = doc(db, "users", uid);
+
+  // Idempotent: register + onAuthStateChanged both call this; rewriting
+  // createdAt on an existing doc fails Firestore update rules.
+  const existing = await getDoc(docRef);
+  if (existing.exists()) return;
+
   const defaultAvatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(data.nickname || uid)}`;
 
   const profile: UserProfile = {
@@ -55,7 +61,14 @@ export async function createUserProfile(
     createdAt: Date.now(),
   };
 
-  await setDoc(docRef, profile, { merge: true });
+  try {
+    await setDoc(docRef, profile);
+  } catch (error: unknown) {
+    // Race: another caller created the doc first
+    const again = await getDoc(docRef);
+    if (again.exists()) return;
+    throw error;
+  }
 }
 
 export async function updateUserProfile(

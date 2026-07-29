@@ -155,7 +155,11 @@ function MyListingsPageContent() {
     setBuyerModal({ id, status, buyers: [] });
     try {
       const chatsRef = collection(db, "chats");
-      const q = query(chatsRef, where("itemId", "==", id));
+      const q = query(
+        chatsRef,
+        where("participants", "array-contains", user?.uid),
+        where("itemId", "==", id),
+      );
       const snap = await getDocs(q);
 
       const uniqueUserIds = new Set<string>();

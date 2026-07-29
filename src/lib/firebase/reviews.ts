@@ -1,7 +1,6 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "./config";
-import { getUserReviews, updateOrder } from "./firestore";
-import { updateUserProfile } from "./users";
+import { auth, db } from "./config";
+import { updateOrder } from "./firestore";
 
 export type SubmitReviewParams = {
   targetUserId: string;
@@ -16,17 +15,27 @@ export async function recalculateSellerRating(sellerId: string): Promise<{
   rating: number;
   reviewCount: number;
 }> {
-  const reviews = await getUserReviews(sellerId);
-  const reviewCount = reviews.length;
-  const rating =
-    reviewCount === 0
-      ? 0
-      : Math.round(
-          (reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10,
-        ) / 10;
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Must be signed in to recalculate rating");
+  }
 
-  await updateUserProfile(sellerId, { rating, reviewCount });
-  return { rating, reviewCount };
+  const token = await user.getIdToken();
+  const res = await fetch("/api/reviews/recalculate", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ sellerId }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`recalculateSellerRating failed: ${res.status} ${detail}`);
+  }
+
+  return (await res.json()) as { rating: number; reviewCount: number };
 }
 
 export async function submitReview(params: SubmitReviewParams): Promise<void> {

@@ -48,16 +48,17 @@ export async function sendBargainOffer(
   const metadata = { offerPrice };
 
   const chatsRef = collection(db, "chats");
-  const q = query(chatsRef, where("itemId", "==", itemId));
+  const q = query(
+    chatsRef,
+    where("participants", "array-contains", buyerId),
+    where("itemId", "==", itemId),
+  );
   const snap = await getDocs(q);
 
   let existingChatId: string | null = null;
   snap.forEach((docSnap) => {
     const data = docSnap.data();
-    if (
-      data.participants.includes(buyerId) &&
-      data.participants.includes(sellerId)
-    ) {
+    if (data.participants.includes(sellerId)) {
       existingChatId = docSnap.id;
     }
   });

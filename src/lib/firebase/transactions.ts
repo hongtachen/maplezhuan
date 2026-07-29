@@ -280,7 +280,11 @@ export async function cancelOrdersForRelistedListing(params: {
   const { itemId, buyerId, sellerId, itemTitle, itemType } = params;
 
   const snap = await getDocs(
-    query(collection(db, "orders"), where("itemId", "==", itemId)),
+    query(
+      collection(db, "orders"),
+      where("itemId", "==", itemId),
+      where("sellerId", "==", sellerId),
+    ),
   );
 
   const cancelText =
@@ -476,12 +480,17 @@ export async function findChatByItemAndUsers(
   userId: string,
   otherUserId: string,
 ): Promise<string | null> {
+  // Must include array-contains so Firestore rules can authorize the query.
   const snap = await getDocs(
-    query(collection(db, "chats"), where("itemId", "==", itemId)),
+    query(
+      collection(db, "chats"),
+      where("participants", "array-contains", userId),
+      where("itemId", "==", itemId),
+    ),
   );
   for (const d of snap.docs) {
     const participants: string[] = d.data().participants || [];
-    if (participants.includes(userId) && participants.includes(otherUserId)) {
+    if (participants.includes(otherUserId)) {
       return d.id;
     }
   }
