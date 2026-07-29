@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useBoughtItems } from "@/hooks/useOrderItems";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -14,15 +14,25 @@ import { PageLoading } from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
 import { btnPrimary } from "@/lib/feedback/styles";
 
+type BoughtTab = "active" | "cancelled";
+
 export default function BoughtPage() {
   const router = useRouter();
   const { items, setItems, loading } = useBoughtItems();
   const { user } = useAuthStore();
   const { showToast } = useApp();
 
+  const [tab, setTab] = useState<BoughtTab>("active");
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
+
+  const activeItems = useMemo(() => items.filter((i) => !i.cancelled), [items]);
+  const cancelledItems = useMemo(
+    () => items.filter((i) => i.cancelled),
+    [items],
+  );
+  const visibleItems = tab === "active" ? activeItems : cancelledItems;
 
   const reviewingItem = items.find((i) => i.id === reviewingId);
 
@@ -94,6 +104,33 @@ export default function BoughtPage() {
       </header>
 
       <div className="flex-1 max-w-[500px] md:max-w-4xl lg:max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-24">
+        {!loading && items.length > 0 && (
+          <div className="flex gap-2 mb-5 p-1 bg-white rounded-2xl border border-[rgba(31,41,51,0.06)] shadow-sm">
+            <button
+              type="button"
+              onClick={() => setTab("active")}
+              className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors ${
+                tab === "active"
+                  ? "bg-[#2f9e6d] text-white"
+                  : "text-[#5a6b73] hover:bg-gray-50"
+              }`}
+            >
+              有效交易 ({activeItems.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("cancelled")}
+              className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors ${
+                tab === "cancelled"
+                  ? "bg-gray-700 text-white"
+                  : "text-[#5a6b73] hover:bg-gray-50"
+              }`}
+            >
+              已取消 ({cancelledItems.length})
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <PageLoading />
         ) : items.length === 0 ? (
@@ -110,13 +147,27 @@ export default function BoughtPage() {
               </button>
             }
           />
+        ) : visibleItems.length === 0 ? (
+          <EmptyState
+            emoji={tab === "cancelled" ? "📭" : "🛍"}
+            title={
+              tab === "cancelled" ? "没有已取消的交易" : "暂无有效购买记录"
+            }
+            description={
+              tab === "cancelled"
+                ? "卖家重新上架后，取消的交易会出现在这里"
+                : "完成的购买会出现在这里"
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {items.map((item) => (
+            {visibleItems.map((item) => (
               <div
                 key={item.id}
-                className={`bg-white rounded-[20px] overflow-hidden shadow-sm border border-[rgba(31,41,51,0.04)] ${
-                  item.cancelled ? "opacity-75" : ""
+                className={`bg-white rounded-[20px] overflow-hidden shadow-sm border ${
+                  item.cancelled
+                    ? "border-gray-200 opacity-90"
+                    : "border-[rgba(31,41,51,0.04)]"
                 }`}
               >
                 <div className="flex items-center gap-4 p-4">
@@ -141,7 +192,7 @@ export default function BoughtPage() {
                   </div>
                   {item.cancelled ? (
                     <span className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-500">
-                      交易已取消
+                      已取消
                     </span>
                   ) : item.reviewed ? (
                     <span className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600">
@@ -153,6 +204,12 @@ export default function BoughtPage() {
                     </span>
                   )}
                 </div>
+
+                {item.cancelled && (
+                  <div className="mx-4 mb-3 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 text-[12px] text-amber-800 leading-relaxed">
+                    卖家已将此商品重新上架，本次交易已取消。如有疑问可联系卖家。
+                  </div>
+                )}
 
                 <div className="border-t border-[rgba(31,41,51,0.04)] px-4 py-3 flex items-center justify-between bg-gray-50/40 gap-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">

@@ -59,8 +59,8 @@ export function useTransactionCounts(): TransactionCounts {
         setCounts({
           listings: allListings.length,
           listingsActive: activeListings.length,
-          sold: soldOrders.length,
-          bought: boughtOrders.length,
+          sold: soldOrders.filter((o) => o.status !== "已取消").length,
+          bought: boughtOrders.filter((o) => o.status !== "已取消").length,
           pendingReviews: boughtOrders.filter(
             (o) => o.status !== "已评价" && o.status !== "已取消",
           ).length,

@@ -10,7 +10,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { db } from "./config";
+import { db, auth } from "./config";
 import { ItemDocument, MessageType, SubletDocument } from "./firestore";
 import { getUserProfile, UserProfile } from "./users";
 import { updateDocument } from "./firestore";
@@ -154,49 +154,40 @@ export async function confirmSold(params: {
   listing: ListingInfo;
   finalPrice?: number;
 }): Promise<void> {
-  const { itemId, itemType, buyer, seller, chatId, listing, finalPrice } =
-    params;
-  const colName = itemType === "item" ? "items" : "sublets";
-  const newStatus = itemType === "item" ? "已售出" : "已租出";
-  const salePrice = finalPrice ?? listing.price;
+  const { itemId, itemType, buyer, chatId, listing, finalPrice } = params;
 
-  await updateDocument(colName, itemId, {
-    status: newStatus,
-    buyerId: buyer.uid,
-    buyerName: buyer.nickname,
-    buyerAvatar: buyer.avatar,
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Must be signed in to complete a sale");
+  }
+
+  const token = await user.getIdToken();
+  const res = await fetch("/api/transactions/complete-sale", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      itemId,
+      itemType,
+      chatId,
+      buyerId: buyer.uid,
+      finalPrice,
+      listing: {
+        title: listing.title,
+        price: listing.price,
+        emoji: listing.emoji,
+        gradientFrom: listing.gradientFrom,
+        gradientTo: listing.gradientTo,
+      },
+    }),
   });
 
-  await addDoc(collection(db, "orders"), {
-    itemId,
-    itemTitle: listing.title,
-    itemPrice: salePrice,
-    itemEmoji: listing.emoji,
-    itemGradientFrom: listing.gradientFrom,
-    itemGradientTo: listing.gradientTo,
-    buyerId: buyer.uid,
-    buyerName: buyer.nickname,
-    buyerAvatar: buyer.avatar,
-    sellerId: seller.uid,
-    sellerName: seller.nickname,
-    sellerAvatar: seller.avatar,
-    status: "已完成",
-    createdAt: serverTimestamp(),
-    completedAt: serverTimestamp(),
-  });
-
-  const text =
-    itemType === "item"
-      ? "卖家已确认售出给您，交易完成！"
-      : "卖家已确认租出给您，交易完成！";
-  await postChatMessage(chatId, seller.uid, text, "action_sold", buyer.uid);
-
-  const soldEmail = buildTransactionCompletedEmail({
-    nickname: buyer.nickname,
-    itemTitle: listing.title,
-    chatId,
-  });
-  await notifyBuyerByEmail(buyer, soldEmail.subject, soldEmail.html);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`completeSale failed: ${res.status} ${detail}`);
+  }
 }
 
 export async function acceptBargain(params: {
@@ -269,10 +260,10 @@ export async function declineRequest(params: {
   await notifyBuyerByEmail(buyer, declinedEmail.subject, declinedEmail.html);
 }
 
-/** Notify buyer when seller relists after reserve/sale. */
+/** Cancel open orders when seller relists after a sale. */
 export async function cancelOrdersForRelistedListing(params: {
   itemId: string;
-  buyerId: string;
+  buyerId?: string;
   sellerId: string;
   itemTitle: string;
   itemType: ItemType;
@@ -292,21 +283,36 @@ export async function cancelOrdersForRelistedListing(params: {
       ? "卖家已将此转租重新上架，本次交易已取消。"
       : "卖家已将此商品重新上架，本次交易已取消。";
 
-  let cancelledAny = false;
+  const buyersToNotify = new Set<string>();
+  if (buyerId) buyersToNotify.add(buyerId);
+
   for (const docSnap of snap.docs) {
     const data = docSnap.data();
-    if (data.buyerId !== buyerId || data.status === "已取消") continue;
+    if (data.status === "已取消") continue;
+    // When relisting, void every non-cancelled order for this listing
     await updateDocument("orders", docSnap.id, { status: "已取消" });
-    cancelledAny = true;
+    if (typeof data.buyerId === "string") {
+      buyersToNotify.add(data.buyerId);
+    }
   }
 
-  const chatId = await findChatByItemAndUsers(itemId, sellerId, buyerId);
-  if (chatId) {
-    await postChatMessage(chatId, sellerId, cancelText, "text", buyerId);
-  }
+  for (const notifyBuyerId of buyersToNotify) {
+    const chatId = await findChatByItemAndUsers(
+      itemId,
+      sellerId,
+      notifyBuyerId,
+    );
+    if (chatId) {
+      await postChatMessage(
+        chatId,
+        sellerId,
+        cancelText,
+        "text",
+        notifyBuyerId,
+      );
+    }
 
-  if (cancelledAny) {
-    const profile = await getUserProfile(buyerId);
+    const profile = await getUserProfile(notifyBuyerId);
     if (profile?.email) {
       const cancelledEmail = buildTransactionCancelledEmail({
         nickname: profile.nickname || "买家",
@@ -345,13 +351,7 @@ export async function relistListing(params: {
       ? uiStatusToSubletDb("在售")
       : uiStatusToItemDb("在售");
 
-  await updateDocument(colName, itemId, {
-    status: newStatus,
-    ...LISTING_BUYER_FIELD_CLEARS,
-  });
-
-  if (!previousBuyerId) return;
-
+  // Cancel orders first so buyer never keeps a "completed" sale after relist
   if (previousStatus === "已售") {
     await cancelOrdersForRelistedListing({
       itemId,
@@ -360,10 +360,7 @@ export async function relistListing(params: {
       itemTitle,
       itemType,
     });
-    return;
-  }
-
-  if (previousStatus === "已预留") {
+  } else if (previousStatus === "已预留" && previousBuyerId) {
     const chatId = await findChatByItemAndUsers(
       itemId,
       sellerId,
@@ -383,6 +380,11 @@ export async function relistListing(params: {
       );
     }
   }
+
+  await updateDocument(colName, itemId, {
+    status: newStatus,
+    ...LISTING_BUYER_FIELD_CLEARS,
+  });
 }
 
 /** Used by profile/listings when changing status with buyer picker */
