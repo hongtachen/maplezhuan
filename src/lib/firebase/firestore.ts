@@ -129,6 +129,7 @@ export type HistoryDocument = {
   itemTitle: string;
   itemPrice: number;
   itemPriceUnit?: string;
+  itemImage?: string;
   itemEmoji: string;
   itemGradientFrom?: string;
   itemGradientTo?: string;
