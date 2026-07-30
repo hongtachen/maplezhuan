@@ -2,6 +2,10 @@ import { create } from "zustand";
 import type { LocationData } from "@/components/ui/LocationPicker";
 import { clearAllFilePreviewUrls } from "@/lib/imagePreviewUrls";
 import { clearAllVideoPreviewUrls } from "@/lib/videoPreviewUrls";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  type SupportedPhoneCountry,
+} from "@/lib/phone/constants";
 
 interface SubletFormData {
   title: string;
@@ -23,6 +27,7 @@ interface SubletFormData {
   utilitiesIncluded: boolean;
   furnished: boolean;
   contactPhone: string;
+  contactPhoneCountry: SupportedPhoneCountry;
   contactWechat: string;
   description: string;
 }
@@ -69,6 +74,7 @@ const initialSubletData: SubletFormData = {
   utilitiesIncluded: false,
   furnished: false,
   contactPhone: "",
+  contactPhoneCountry: DEFAULT_PHONE_COUNTRY,
   contactWechat: "",
   description: "",
 };

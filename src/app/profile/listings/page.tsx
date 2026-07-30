@@ -442,7 +442,14 @@ function MyListingsPageContent() {
                           </div>
                         )}
                       </Link>
-                      <div className="flex-1 min-w-0">
+                      <Link
+                        href={
+                          item.listingType === "sublet"
+                            ? `/sublet/${item.id}`
+                            : `/listing/${item.id}`
+                        }
+                        className="flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                      >
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 text-[#5a6b73] shrink-0">
                             {getListingKindLabel(item.listingType)}
@@ -459,7 +466,7 @@ function MyListingsPageContent() {
                             ? `成交于 ${item.completedAt || item.postedAt}`
                             : `发布于 ${item.postedAt}`}
                         </p>
-                      </div>
+                      </Link>
                       <div className="relative shrink-0">
                         <button
                           onClick={() =>
@@ -605,61 +612,60 @@ function MyListingsPageContent() {
                         </div>
                       )}
 
-                    {!isCompletedTab ? (
-                      <div className="border-t border-[rgba(31,41,51,0.04)] px-4 py-3 flex items-center gap-2 bg-gray-50/40">
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-[#1f2933] bg-white border border-[rgba(31,41,51,0.10)] py-2.5 rounded-[12px] hover:bg-[#f3fbf7] hover:border-[#2f9e6d]/30 hover:text-[#2f9e6d] transition-all"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    <div className="border-t border-[rgba(31,41,51,0.04)] px-4 py-3 flex flex-col gap-2 bg-gray-50/40">
+                      <Link
+                        href={
+                          item.listingType === "sublet"
+                            ? `/sublet/${item.id}`
+                            : `/listing/${item.id}`
+                        }
+                        className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-[#2f9e6d] bg-white border border-[#2f9e6d]/20 py-2.5 rounded-[12px] hover:bg-[#f3fbf7] transition-all"
+                      >
+                        查看详情
+                      </Link>
+                      {!isCompletedTab && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openEdit(item)}
+                            className="flex-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-[#1f2933] bg-white border border-[rgba(31,41,51,0.10)] py-2.5 rounded-[12px] hover:bg-[#f3fbf7] hover:border-[#2f9e6d]/30 hover:text-[#2f9e6d] transition-all"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                          编辑
-                        </button>
-                        <button
-                          onClick={() => setDeleteModal(item.id)}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-rose-500 bg-white border border-rose-100 py-2.5 rounded-[12px] hover:bg-rose-50 hover:border-rose-200 transition-all"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            编辑
+                          </button>
+                          <button
+                            onClick={() => setDeleteModal(item.id)}
+                            className="flex-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-rose-500 bg-white border border-rose-100 py-2.5 rounded-[12px] hover:bg-rose-50 hover:border-rose-200 transition-all"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                          删除
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="border-t border-[rgba(31,41,51,0.04)] px-4 py-3 bg-gray-50/40">
-                        <Link
-                          href={
-                            item.listingType === "sublet"
-                              ? `/sublet/${item.id}`
-                              : `/listing/${item.id}`
-                          }
-                          className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-[#2f9e6d] bg-white border border-[#2f9e6d]/20 py-2.5 rounded-[12px] hover:bg-[#f3fbf7] transition-all"
-                        >
-                          查看详情
-                        </Link>
-                      </div>
-                    )}
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            删除
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}

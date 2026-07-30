@@ -25,11 +25,11 @@ export default function SubletStep4Page() {
   const [contactError, setContactError] = useState<string | undefined>();
   const [phoneError, setPhoneError] = useState<string | undefined>();
 
-  const subletPhoneInputClass = (hasError: boolean) =>
-    `w-full pl-12 pr-4 py-3.5 rounded-xl border outline-none transition-all text-sm ${
+  const subletPhoneShellClass = (hasError: boolean) =>
+    `flex w-full items-stretch overflow-hidden rounded-xl border bg-white transition-all ${
       hasError
-        ? "border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-1 focus:ring-rose-200"
-        : "border-[rgba(31,41,51,0.12)] focus:border-[#2f9e6d] focus:ring-1 focus:ring-[#2f9e6d]"
+        ? "border-rose-300 bg-rose-50/40 focus-within:border-rose-400 focus-within:ring-1 focus-within:ring-rose-200"
+        : "border-[rgba(31,41,51,0.12)] focus-within:border-[#2f9e6d] focus-within:ring-1 focus-within:ring-[#2f9e6d]"
     }`;
 
   const handlePublishSuccessBrowse = useCallback(() => {
@@ -51,6 +51,7 @@ export default function SubletStep4Page() {
     const contactResult = validateContactPair({
       phone: subletData.contactPhone,
       wechat: subletData.contactWechat,
+      country: subletData.contactPhoneCountry,
     });
     if (!contactResult.ok) {
       if (contactResult.field === "phone") {
@@ -301,35 +302,22 @@ export default function SubletStep4Page() {
               </p>
 
               <div className="flex flex-col gap-3">
-                <div className="relative">
-                  <div className="absolute left-4 top-3.5 text-[#5a6b73]">
-                    <svg
-                      className="w-5 h-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1.8}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                  </div>
-                  <PhoneInput
-                    value={subletData.contactPhone}
-                    onChange={(value) => {
-                      setSubletData({ contactPhone: value });
-                      setContactError(undefined);
-                      setPhoneError(undefined);
-                    }}
-                    error={phoneError}
-                    className={subletPhoneInputClass(
-                      !!contactError || !!phoneError,
-                    )}
-                  />
-                </div>
+                <PhoneInput
+                  value={subletData.contactPhone}
+                  country={subletData.contactPhoneCountry}
+                  onCountryChange={(country) =>
+                    setSubletData({ contactPhoneCountry: country })
+                  }
+                  onChange={(value) => {
+                    setSubletData({ contactPhone: value });
+                    setContactError(undefined);
+                    setPhoneError(undefined);
+                  }}
+                  error={phoneError}
+                  className={subletPhoneShellClass(
+                    !!contactError || !!phoneError,
+                  )}
+                />
                 {contactError && (
                   <p
                     role="alert"

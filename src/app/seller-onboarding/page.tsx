@@ -11,6 +11,10 @@ import FadeModal from "@/components/motion/FadeModal";
 import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { validateContactPair } from "@/lib/phone/validateContact";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  type SupportedPhoneCountry,
+} from "@/lib/phone/constants";
 
 type FormErrors = {
   contact?: string;
@@ -25,6 +29,9 @@ export default function SellerOnboardingPage() {
 
   const [wechat, setWechat] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState<SupportedPhoneCountry>(
+    DEFAULT_PHONE_COUNTRY,
+  );
   const [addressData, setAddressData] = useState<LocationData | undefined>(
     undefined,
   );
@@ -44,7 +51,11 @@ export default function SellerOnboardingPage() {
   const handleSubmit = async () => {
     setErrors({});
 
-    const contactResult = validateContactPair({ phone, wechat });
+    const contactResult = validateContactPair({
+      phone,
+      wechat,
+      country: phoneCountry,
+    });
     if (!contactResult.ok) {
       if (contactResult.field === "phone") {
         setErrors({ phone: contactResult.error });
@@ -227,28 +238,27 @@ export default function SellerOnboardingPage() {
                     className={contactInputClass(!!errors.contact)}
                   />
                 </div>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] grayscale opacity-70 z-10 pointer-events-none">
-                    📱
-                  </span>
-                  <PhoneInput
-                    value={phone}
-                    onChange={(value) => {
-                      setPhone(value);
-                      if (errors.contact || errors.phone) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          contact: undefined,
-                          phone: undefined,
-                        }));
-                      }
-                    }}
-                    error={errors.phone}
-                    className={contactInputClass(
-                      !!errors.contact || !!errors.phone,
-                    )}
-                  />
-                </div>
+                <PhoneInput
+                  value={phone}
+                  country={phoneCountry}
+                  onCountryChange={setPhoneCountry}
+                  onChange={(value) => {
+                    setPhone(value);
+                    if (errors.contact || errors.phone) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        contact: undefined,
+                        phone: undefined,
+                      }));
+                    }
+                  }}
+                  error={errors.phone}
+                  className={`flex w-full items-stretch overflow-hidden rounded-[16px] border bg-[#f7f9fc] transition-all focus-within:bg-white ${
+                    errors.contact || errors.phone
+                      ? "border-rose-300 bg-rose-50/40 focus-within:border-rose-400"
+                      : "border-transparent focus-within:border-[#2f9e6d]"
+                  }`}
+                />
                 {errors.contact && (
                   <p
                     role="alert"

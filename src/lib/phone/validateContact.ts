@@ -1,4 +1,4 @@
-import { CONTACT_ERRORS } from "./constants";
+import { CONTACT_ERRORS, type SupportedPhoneCountry } from "./constants";
 import { validatePhone } from "./validatePhone";
 
 export type ContactPairValidationResult =
@@ -8,6 +8,7 @@ export type ContactPairValidationResult =
 export function validateContactPair(input: {
   phone: string;
   wechat: string;
+  country?: SupportedPhoneCountry;
 }): ContactPairValidationResult {
   const wechat = input.wechat.trim();
   const phoneRaw = input.phone.trim();
@@ -21,7 +22,10 @@ export function validateContactPair(input: {
   }
 
   if (phoneRaw) {
-    const phoneResult = validatePhone(phoneRaw, { required: false });
+    const phoneResult = validatePhone(phoneRaw, {
+      required: false,
+      defaultCountry: input.country,
+    });
     if (!phoneResult.ok) {
       return {
         ok: false,

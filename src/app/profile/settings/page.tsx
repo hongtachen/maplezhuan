@@ -12,6 +12,11 @@ import { useApp } from "@/components/app/AppContext";
 import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { validateContactPair } from "@/lib/phone/validateContact";
+import { normalizePhone, splitPhoneForInput } from "@/lib/phone/validatePhone";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  type SupportedPhoneCountry,
+} from "@/lib/phone/constants";
 import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
 
 export default function SettingsPage() {
@@ -22,6 +27,9 @@ export default function SettingsPage() {
   const [nickname, setNickname] = useState("");
   const [wechat, setWechat] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState<SupportedPhoneCountry>(
+    DEFAULT_PHONE_COUNTRY,
+  );
   const [addressData, setAddressData] = useState<LocationData | undefined>(
     undefined,
   );
@@ -39,7 +47,11 @@ export default function SettingsPage() {
       setTimeout(() => {
         if (userProfile.nickname) setNickname(userProfile.nickname);
         if (userProfile.wechat) setWechat(userProfile.wechat);
-        if (userProfile.phone) setPhone(userProfile.phone);
+        if (userProfile.phone) {
+          const parts = splitPhoneForInput(userProfile.phone);
+          setPhone(parts.nationalNumber);
+          setPhoneCountry(parts.country);
+        }
         if (userProfile.isPublicContact !== undefined)
           setIsPublic(userProfile.isPublicContact);
         if (userProfile.emailNotifications !== undefined)
@@ -66,7 +78,11 @@ export default function SettingsPage() {
       }
 
       if (userProfile.isVerifiedSeller) {
-        const contactResult = validateContactPair({ phone, wechat });
+        const contactResult = validateContactPair({
+          phone,
+          wechat,
+          country: phoneCountry,
+        });
         if (!contactResult.ok) {
           if (contactResult.field === "phone") {
             setPhoneError(contactResult.error);
@@ -115,7 +131,9 @@ export default function SettingsPage() {
       const updates: Partial<UserProfile> = {
         nickname: nickname.trim(),
         wechat: wechat.trim(),
-        phone: phone.trim(),
+        phone: phone.trim()
+          ? (normalizePhone(phone, phoneCountry) ?? phone.trim())
+          : "",
         isPublicContact: isPublic,
         emailNotifications: emailNotifications,
       };
@@ -379,20 +397,17 @@ export default function SettingsPage() {
                   <label className="block text-[13px] font-bold text-[#5a6b73] mb-1.5 ml-1">
                     手机号
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] grayscale opacity-70 z-10 pointer-events-none">
-                      📱
-                    </span>
-                    <PhoneInput
-                      value={phone}
-                      onChange={(value) => {
-                        setPhone(value);
-                        setContactError(undefined);
-                        setPhoneError(undefined);
-                      }}
-                      error={phoneError}
-                    />
-                  </div>
+                  <PhoneInput
+                    value={phone}
+                    country={phoneCountry}
+                    onCountryChange={setPhoneCountry}
+                    onChange={(value) => {
+                      setPhone(value);
+                      setContactError(undefined);
+                      setPhoneError(undefined);
+                    }}
+                    error={phoneError}
+                  />
                 </div>
                 {contactError && (
                   <p
