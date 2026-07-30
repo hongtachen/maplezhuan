@@ -7,6 +7,7 @@ import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { PageLoading } from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
+import ProductThumbnail from "@/components/ui/ProductThumbnail";
 import { btnPrimary } from "@/lib/feedback/styles";
 
 export default function HistoryPage() {
@@ -104,11 +105,12 @@ export default function HistoryPage() {
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white rounded-[18px] flex items-center gap-3 p-3 shadow-sm border border-[rgba(31,41,51,0.04)] group"
-                      >
+                    {items.map((item) => {
+                      const detailHref =
+                        item.itemType === "sublet"
+                          ? `/sublet/${item.itemId}`
+                          : `/listing/${item.itemId}`;
+                      const emojiFallback = (
                         <div
                           className="w-14 h-14 rounded-[12px] flex items-center justify-center text-2xl shrink-0"
                           style={{
@@ -117,47 +119,89 @@ export default function HistoryPage() {
                         >
                           {item.emoji}
                         </div>
+                      );
+                      return (
                         <div
-                          className="flex-1 min-w-0 cursor-pointer"
-                          onClick={() =>
-                            router.push(
-                              item.itemType === "sublet"
-                                ? `/sublet/${item.itemId}`
-                                : `/listing/${item.itemId}`,
-                            )
-                          }
+                          key={item.id}
+                          className="bg-white rounded-[18px] overflow-hidden shadow-sm border border-[rgba(31,41,51,0.04)] group"
                         >
-                          <p className="font-medium text-[#1f2933] text-[14px] truncate">
-                            {item.title}
-                          </p>
-                          <p className="text-[#2f9e6d] font-bold text-[13px] mt-0.5">
-                            ${item.price} CAD{item.priceUnit ?? ""}
-                          </p>
-                          <p className="text-[#5a6b73] text-[11px] mt-0.5">
-                            {item.viewedAt}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-gray-300 hover:text-rose-400 hover:bg-rose-50 transition-colors shrink-0"
-                          aria-label="删除记录"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                          <button
+                            type="button"
+                            onClick={() => router.push(detailHref)}
+                            className="w-full flex items-center gap-3 p-3 text-left hover:bg-[#f3fbf7]/60 transition-colors"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                            {item.image ? (
+                              <ProductThumbnail
+                                src={item.image}
+                                alt={item.title}
+                                className="w-14 h-14 rounded-[12px] border border-[rgba(31,41,51,0.08)] shrink-0"
+                              />
+                            ) : (
+                              emojiFallback
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-[#1f2933] text-[14px] truncate">
+                                {item.title}
+                              </p>
+                              <p className="text-[#2f9e6d] font-bold text-[13px] mt-0.5">
+                                ${item.price} CAD{item.priceUnit ?? ""}
+                              </p>
+                              <p className="text-[#5a6b73] text-[11px] mt-0.5">
+                                {item.viewedAt}
+                              </p>
+                            </div>
+                          </button>
+                          <div className="border-t border-[rgba(31,41,51,0.04)] px-3 py-2.5 flex items-center justify-between gap-2 bg-gray-50/40">
+                            <button
+                              type="button"
+                              onClick={() => router.push(detailHref)}
+                              className="flex-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-[#2f9e6d] bg-white border border-[#2f9e6d]/20 py-2 rounded-[12px] hover:bg-[#f3fbf7] transition-all"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                              查看详情
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(item.id)}
+                              className="w-9 h-9 rounded-[12px] flex items-center justify-center text-gray-300 hover:text-rose-400 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors shrink-0"
+                              aria-label="删除记录"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
