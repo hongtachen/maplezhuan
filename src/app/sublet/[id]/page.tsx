@@ -106,6 +106,7 @@ export default function SubletDetailPage() {
       itemPrice: sublet.price,
       itemPriceUnit: "/月",
       itemType: "sublet",
+      itemImage: sublet.images?.[0],
       itemEmoji: "🏠",
       itemGradientFrom: "#f0f9ff",
       itemGradientTo: "#bae6fd",
@@ -652,22 +653,23 @@ export default function SubletDetailPage() {
             {user?.uid !== sublet.sellerId ? (
               <div className="flex flex-col gap-2">
                 <button
-                  type="button"
-                  onClick={() => {
-                    if (!user) {
-                      router.push("/profile");
-                      return;
-                    }
-                    if (sublet.price === 0) {
-                      handleAction("contact");
-                      return;
-                    }
-                    setBargainModalKey((k) => k + 1);
-                    setShowBargainModal(true);
-                  }}
-                  className="w-full py-2.5 rounded-2xl border-2 border-[#2f9e6d] text-[#2f9e6d] font-bold text-sm hover:bg-[#f3fbf7] transition-colors"
+                  onClick={() => handleAction("request_reserve")}
+                  className="w-full bg-[#2f9e6d] hover:bg-[#267a56] text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-md shadow-[#2f9e6d]/20"
                 >
-                  讨价还价
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  申请预订
                 </button>
                 <div className="w-full flex gap-3">
                   <button
@@ -690,23 +692,22 @@ export default function SubletDetailPage() {
                     联系卖家
                   </button>
                   <button
-                    onClick={() => handleAction("request_reserve")}
-                    className="flex-1 bg-[#2f9e6d] hover:bg-[#267a56] text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-md shadow-[#2f9e6d]/20"
+                    type="button"
+                    onClick={() => {
+                      if (!user) {
+                        router.push("/profile");
+                        return;
+                      }
+                      if (sublet.price === 0) {
+                        handleAction("contact");
+                        return;
+                      }
+                      setBargainModalKey((k) => k + 1);
+                      setShowBargainModal(true);
+                    }}
+                    className="flex-1 py-3.5 rounded-2xl border-2 border-[#2f9e6d] text-[#2f9e6d] font-bold text-sm hover:bg-[#f3fbf7] transition-colors"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    申请预订
+                    讨价还价
                   </button>
                 </div>
               </div>
