@@ -38,13 +38,13 @@ export default function Hero({ onOpenFounder, onOpenBuyer }: HeroProps) {
 
             {/* H1 — multi-size matching Figma */}
             <h1 className="flex flex-col tracking-[0.35px]">
-              <span className="text-fluid-h2-mobile md:text-fluid-h2 font-semibold text-[#1f2933] leading-[60px]">
+              <span className="text-[clamp(1rem,calc(100cqi/16),2.1rem)] md:text-fluid-h2 font-semibold text-[#1f2933] leading-[60px]">
                 不用加好友，不用刷群翻帖
               </span>
-              <span className="text-fluid-h1-mobile md:text-fluid-h1 font-semibold md:mt-3 text-[#1f2933] leading-[60px]">
+              <span className="whitespace-nowrap text-[clamp(1.5rem,calc(100cqi/7),3.5rem)] md:text-fluid-h1 font-semibold md:mt-3 text-[#1f2933] leading-[60px]">
                 闲置一眼看清
               </span>
-              <span className="text-fluid-h2-mobile md:text-fluid-h2 mt-3 font-semibold text-[#2f9e6d] leading-[60px]">
+              <span className="text-[clamp(1rem,calc(100cqi/16),2.1rem)] md:text-fluid-h2 mt-3 font-semibold text-[#2f9e6d] leading-[60px]">
                 价格、状态、位置直接展示
               </span>
             </h1>
