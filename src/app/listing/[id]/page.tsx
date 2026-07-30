@@ -108,6 +108,7 @@ export default function ListingDetailPage() {
       itemTitle: item.title,
       itemPrice: item.price,
       itemType: "item",
+      itemImage: item.images?.[0],
       itemEmoji:
         item.category === "数码电子"
           ? "💻"
@@ -658,22 +659,10 @@ export default function ListingDetailPage() {
             {user?.uid !== item.sellerId ? (
               <div className="flex flex-col gap-2">
                 <button
-                  type="button"
-                  onClick={() => {
-                    if (!user) {
-                      router.push("/profile");
-                      return;
-                    }
-                    if (item.price === 0) {
-                      handleAction("contact");
-                      return;
-                    }
-                    setBargainModalKey((k) => k + 1);
-                    setShowBargainModal(true);
-                  }}
-                  className="w-full py-2.5 rounded-2xl border-2 border-[#2f9e6d] text-[#2f9e6d] font-bold text-sm hover:bg-[#f3fbf7] transition-colors"
+                  onClick={() => handleAction("request_buy")}
+                  className="w-full bg-[#2f9e6d] hover:bg-[#267a56] text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-1 transition-colors shadow-md shadow-[#2f9e6d]/20"
                 >
-                  讨价还价
+                  直接购买
                 </button>
                 <div className="w-full flex gap-2">
                   <button
@@ -701,10 +690,22 @@ export default function ListingDetailPage() {
                     申请预留
                   </button>
                   <button
-                    onClick={() => handleAction("request_buy")}
-                    className="flex-1 bg-[#2f9e6d] hover:bg-[#267a56] text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-1 transition-colors shadow-md shadow-[#2f9e6d]/20"
+                    type="button"
+                    onClick={() => {
+                      if (!user) {
+                        router.push("/profile");
+                        return;
+                      }
+                      if (item.price === 0) {
+                        handleAction("contact");
+                        return;
+                      }
+                      setBargainModalKey((k) => k + 1);
+                      setShowBargainModal(true);
+                    }}
+                    className="flex-1 py-3 rounded-2xl border-2 border-[#2f9e6d] text-[#2f9e6d] font-bold text-sm hover:bg-[#f3fbf7] transition-colors"
                   >
-                    直接购买
+                    讨价还价
                   </button>
                 </div>
               </div>
