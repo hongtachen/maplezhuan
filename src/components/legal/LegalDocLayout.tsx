@@ -25,20 +25,29 @@ export default function LegalDocLayout({
               className="h-16"
             />
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex items-center gap-3 sm:gap-4 text-sm">
             {!isIndex ? (
               <Link
                 href="/legal"
-                className="text-[#5a6b73] hover:text-[#2f9e6d] transition-colors"
+                className="hidden sm:inline text-[#5a6b73] hover:text-[#2f9e6d] transition-colors"
               >
                 法律信息
               </Link>
             ) : null}
             <Link
               href="/about"
-              className="text-[#5a6b73] hover:text-[#2f9e6d] transition-colors"
+              className="hidden sm:inline text-[#5a6b73] hover:text-[#2f9e6d] transition-colors"
             >
               枫转故事
+            </Link>
+            <Link
+              href="/"
+              className="bg-[#2f9e6d] text-white text-sm font-medium px-4 py-2 rounded-lg
+                         transition-all duration-200
+                         hover:bg-[#1f7a55] hover:-translate-y-0.5 hover:shadow-[0_4px_14px_rgba(47,158,109,0.4)]
+                         active:translate-y-0 active:shadow-none active:scale-[0.97]"
+            >
+              继续浏览
             </Link>
           </nav>
         </div>
