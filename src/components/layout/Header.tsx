@@ -79,12 +79,12 @@ export default function Header({ onOpenFounder }: HeaderProps) {
 
       {/* Mobile slide-in drawer from right */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-[75vw] max-w-[320px] bg-[#f3fbf7] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden flex flex-col ${
+        className={`fixed top-0 right-0 z-50 h-dvh w-[75vw] max-w-[320px] bg-[#f3fbf7] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden flex flex-col overflow-hidden ${
           drawerOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Drawer header */}
-        <div className="flex items-center justify-between px-6 h-16 border-b border-[rgba(31,41,51,0.05)]">
+        <div className="flex items-center justify-between px-6 h-16 border-b border-[rgba(31,41,51,0.05)] shrink-0">
           <span className="text-[#1f2933] font-medium">菜单</span>
           <button
             onClick={closeDrawer}
@@ -95,8 +95,8 @@ export default function Header({ onOpenFounder }: HeaderProps) {
           </button>
         </div>
 
-        {/* Drawer nav links */}
-        <nav className="flex flex-col px-6 py-6 gap-1 flex-1">
+        {/* Nav fills middle; stays on one screen without pushing past the fold */}
+        <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col px-6 py-6 gap-1">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -109,8 +109,8 @@ export default function Header({ onOpenFounder }: HeaderProps) {
           ))}
         </nav>
 
-        {/* Drawer CTA button */}
-        <div className="px-6 pb-10">
+        {/* CTA pinned to bottom of the visible drawer */}
+        <div className="shrink-0 px-6 pt-2 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
           <button
             onClick={() => {
               closeDrawer();
