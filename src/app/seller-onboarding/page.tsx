@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { updateUserProfile, UserProfile } from "@/lib/firebase/users";
@@ -478,6 +479,15 @@ export default function SellerOnboardingPage() {
                 </strong>
                 请勿在公共区域泄露他人的个人隐私信息。
               </div>
+              <p className="pt-1">
+                <Link
+                  href="/legal/community"
+                  className="text-[#2f9e6d] font-medium hover:underline"
+                  onClick={() => setShowGuidelines(false)}
+                >
+                  了解完整《社区与发布规范》
+                </Link>
+              </p>
             </div>
           </div>
           <div className="p-5 border-t border-[rgba(31,41,51,0.04)] bg-white shrink-0">

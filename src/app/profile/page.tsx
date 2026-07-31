@@ -393,6 +393,33 @@ export default function ProfilePage() {
               </svg>
             </button>
 
+            <button
+              onClick={() => router.push("/legal")}
+              className="flex items-center justify-between px-6 py-4 hover:bg-[#f3fbf7] transition-colors border-b border-[rgba(31,41,51,0.04)] text-left"
+            >
+              <div>
+                <span className="block font-medium text-[15px] text-[#1f2933] mb-0.5">
+                  法律与隐私
+                </span>
+                <span className="block text-[11px] text-[#5a6b73]">
+                  隐私政策、服务条款与社区规范
+                </span>
+              </div>
+              <svg
+                className="w-4 h-4 text-[#5a6b73]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
             <div
               role="button"
               tabIndex={0}

@@ -6,6 +6,20 @@ export const SUPPORT_EMAIL =
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://maplezhuan.ca";
 
+/** Registered corporate legal name shown on /legal pages */
+export const LEGAL_ENTITY_NAME =
+  process.env.NEXT_PUBLIC_LEGAL_ENTITY_NAME || "MAPLEZHUAN INC.";
+
+/** Legal / privacy contact — override via NEXT_PUBLIC_LEGAL_EMAIL */
+export const LEGAL_CONTACT_EMAIL =
+  process.env.NEXT_PUBLIC_LEGAL_EMAIL || "maplechuan@gmail.com";
+
+/** Governing law jurisdiction shown on legal pages */
+export const LEGAL_JURISDICTION = "加拿大安大略省";
+
+/** Last-updated date shown on legal documents */
+export const LEGAL_LAST_UPDATED = "2026-07-30";
+
 /** Optional social links — hidden in emails when empty */
 /** Xiaohongshu: set NEXT_PUBLIC_SOCIAL_XHS_USER_ID (profile ID) or full NEXT_PUBLIC_SOCIAL_XHS_URL */
 const XHS_USER_ID = process.env.NEXT_PUBLIC_SOCIAL_XHS_USER_ID || "";

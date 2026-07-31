@@ -108,7 +108,7 @@ export default function BottomNav() {
   const router = useRouter();
   const unreadCount = useUnreadMessages();
 
-  if (pathname === "/about") {
+  if (pathname === "/about" || pathname.startsWith("/legal")) {
     return null;
   }
 

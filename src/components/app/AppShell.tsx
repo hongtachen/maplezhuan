@@ -22,13 +22,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const isPublishInner =
     pathname.startsWith("/publish/") && pathname !== "/publish";
   const isAbout = pathname === "/about";
+  const isLegal = pathname.startsWith("/legal");
   const hideBottomNav =
     isChatRoom ||
     isListingDetail ||
     isProfileInner ||
     isSellerOnboarding ||
-    isPublishInner;
-  const hideAppChrome = isAbout;
+    isPublishInner ||
+    isLegal;
+  const hideAppChrome = isAbout || isLegal;
 
   return (
     <AppProvider>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
@@ -261,6 +262,23 @@ export default function AuthModal() {
             </svg>
             继续使用 Google
           </button>
+
+          <p className="mt-6 text-[11px] text-[#5a6b73] text-center leading-relaxed">
+            登录或注册即表示同意
+            <Link
+              href="/legal/terms"
+              className="text-[#2f9e6d] hover:underline mx-0.5"
+            >
+              《服务条款》
+            </Link>
+            与
+            <Link
+              href="/legal/privacy"
+              className="text-[#2f9e6d] hover:underline mx-0.5"
+            >
+              《隐私政策》
+            </Link>
+          </p>
         </div>
       </div>
     </div>
