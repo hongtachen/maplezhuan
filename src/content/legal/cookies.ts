@@ -19,9 +19,9 @@ export const cookiesDoc: LegalDoc = {
       bullets: [],
     },
     {
-      title: "我们不用什么",
+      title: "访问分析",
       paragraphs: [
-        "当前未使用广告追踪 Cookie，也未接入第三方访问分析工具。若日后启用，会更新本页。",
+        "我们使用Google Analytics了解站点访问与使用情况（例如页面浏览量），以改进产品。",
       ],
     },
     {

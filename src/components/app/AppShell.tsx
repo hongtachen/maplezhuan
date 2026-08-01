@@ -8,6 +8,7 @@ import BottomNav from "./BottomNav";
 import AppSidebar from "./AppSidebar";
 import RouteTransition from "@/components/motion/RouteTransition";
 import CallProvider from "@/components/call/CallProvider";
+import FirebaseAnalytics from "@/components/analytics/FirebaseAnalytics";
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -34,6 +35,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <AppProvider>
+      <FirebaseAnalytics />
       <CallProvider>
         {!hideAppChrome && <AppSidebar />}
 

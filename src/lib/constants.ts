@@ -18,7 +18,7 @@ export const LEGAL_CONTACT_EMAIL =
 export const LEGAL_JURISDICTION = "加拿大安大略省";
 
 /** Last-updated date shown on legal documents */
-export const LEGAL_LAST_UPDATED = "2026-07-30";
+export const LEGAL_LAST_UPDATED = "2026-07-31";
 
 /** Optional social links — hidden in emails when empty */
 /** Xiaohongshu: set NEXT_PUBLIC_SOCIAL_XHS_USER_ID (profile ID) or full NEXT_PUBLIC_SOCIAL_XHS_URL */
