@@ -8,6 +8,12 @@ export interface UserProfile {
   nickname: string;
   avatarUrl: string;
   isVerifiedSeller: boolean;
+  sellerStatus?: "none" | "pending" | "approved" | "rejected";
+  isSuspended?: boolean;
+  /** Mirror of Auth custom claim — never trust for authorization. */
+  isAdmin?: boolean;
+  /** Bootstrap / first admin — protected from regular admin edits. */
+  isSuperAdmin?: boolean;
   wechat?: string;
   phone?: string;
   isPublicContact?: boolean;
@@ -56,6 +62,7 @@ export async function createUserProfile(
     nickname: data.nickname || "MapleUser",
     avatarUrl: data.avatarUrl || defaultAvatar,
     isVerifiedSeller: data.isVerifiedSeller || false,
+    sellerStatus: "none",
     reviewCount: 0,
     profileViews: 0,
     createdAt: Date.now(),
