@@ -24,14 +24,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
     pathname.startsWith("/publish/") && pathname !== "/publish";
   const isAbout = pathname === "/about";
   const isLegal = pathname.startsWith("/legal");
+  const isAdmin = pathname.startsWith("/admin");
   const hideBottomNav =
     isChatRoom ||
     isListingDetail ||
     isProfileInner ||
     isSellerOnboarding ||
     isPublishInner ||
-    isLegal;
-  const hideAppChrome = isAbout || isLegal;
+    isLegal ||
+    isAdmin;
+  const hideAppChrome = isAbout || isLegal || isAdmin;
 
   return (
     <AppProvider>

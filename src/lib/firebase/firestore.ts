@@ -49,6 +49,14 @@ export type ItemDocument = {
   views: number;
   favorites: number;
   inquiries: number;
+  moderationStatus?: "pending" | "approved" | "rejected";
+  isHidden?: boolean;
+  hiddenReason?: string;
+  hiddenAt?: FirestoreReadTimestamp;
+  hiddenBy?: string;
+  moderatedAt?: FirestoreReadTimestamp;
+  moderatedBy?: string;
+  moderationReason?: string;
 };
 
 export type SubletDocument = {
@@ -92,6 +100,14 @@ export type SubletDocument = {
   views: number;
   favorites: number;
   inquiries: number;
+  moderationStatus?: "pending" | "approved" | "rejected";
+  isHidden?: boolean;
+  hiddenReason?: string;
+  hiddenAt?: FirestoreReadTimestamp;
+  hiddenBy?: string;
+  moderatedAt?: FirestoreReadTimestamp;
+  moderatedBy?: string;
+  moderationReason?: string;
 };
 
 export type OrderDocument = {

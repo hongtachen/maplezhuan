@@ -13,6 +13,10 @@ import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { validateContactPair } from "@/lib/phone/validateContact";
 import { FEEDBACK, inlineFeedback } from "@/lib/feedback/styles";
+import {
+  PRE_APPROVAL_ENABLED,
+  initialModerationStatus,
+} from "@/lib/moderation/config";
 
 export default function SubletStep4Page() {
   const router = useRouter();
@@ -158,6 +162,7 @@ export default function SubletStep4Page() {
         ...(videoDurationSec && { videoDurationSec }),
         sellerId: user.uid,
         status: "招租中",
+        moderationStatus: initialModerationStatus(),
         views: 0,
         favorites: 0,
         inquiries: 0,
@@ -165,6 +170,9 @@ export default function SubletStep4Page() {
 
       clearSubletData();
       setShowSuccess(true);
+      if (PRE_APPROVAL_ENABLED) {
+        showToast("已提交，审核通过后将公开展示", "success");
+      }
     } catch (error) {
       console.error("Publish failed:", error);
       showToast("发布失败，请重试", "error");

@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { SubletDocument, recordHistory } from "@/lib/firebase/firestore";
+import { isListingPubliclyVisible } from "@/lib/moderation/config";
 import { incrementListingViewsOnce } from "@/lib/listingViews";
 import { useSellerProfile, formatSellerRating } from "@/hooks/useSellerProfile";
 import LocationPicker from "@/components/ui/LocationPicker";
@@ -307,6 +308,21 @@ export default function SubletDetailPage() {
     );
   }
 
+  const isOwner = user?.uid === sublet.sellerId;
+  if (!isOwner && !isListingPubliclyVisible(sublet)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <p className="text-[#5a6b73] mb-4">转租信息不存在或已被删除</p>
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
+        >
+          返回
+        </button>
+      </div>
+    );
+  }
+
   const title =
     sublet.title ||
     `${sublet.roomTypes?.[0] || "房间"} in ${sublet.propertyType}`;
@@ -383,7 +399,7 @@ export default function SubletDetailPage() {
               videoUrl={sublet.videoUrl}
               alt={title}
               fallback={
-                <div className="w-full h-full bg-gradient-to-br from-[#c7d2fe] to-[#a5b4fc] flex items-center justify-center">
+                <div className="w-full h-full bg-linear-to-br from-[#c7d2fe] to-[#a5b4fc] flex items-center justify-center">
                   <span className="text-8xl md:text-9xl opacity-30">🏠</span>
                 </div>
               }

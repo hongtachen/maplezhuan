@@ -16,6 +16,10 @@ import {
   DEFAULT_PHONE_COUNTRY,
   type SupportedPhoneCountry,
 } from "@/lib/phone/constants";
+import {
+  PRE_APPROVAL_ENABLED,
+  initialSellerStatus,
+} from "@/lib/moderation/config";
 
 type FormErrors = {
   contact?: string;
@@ -85,8 +89,12 @@ export default function SellerOnboardingPage() {
 
     setIsSubmitting(true);
     try {
+      const sellerStatus = initialSellerStatus();
+      const verified = sellerStatus === "approved";
+
       const updates: Partial<UserProfile> = {
-        isVerifiedSeller: true,
+        isVerifiedSeller: verified,
+        sellerStatus,
         wechat,
         phone: phoneE164,
         isPublicContact: isPublic,
@@ -107,7 +115,8 @@ export default function SellerOnboardingPage() {
       useAuthStore.setState({
         userProfile: {
           ...userProfile,
-          isVerifiedSeller: true,
+          isVerifiedSeller: verified,
+          sellerStatus,
           wechat,
           phone: phoneE164,
           isPublicContact: isPublic,
@@ -115,8 +124,13 @@ export default function SellerOnboardingPage() {
         },
       });
 
-      showToast("恭喜！您已成功开通发布权限", "success");
-      router.replace("/publish");
+      if (PRE_APPROVAL_ENABLED) {
+        showToast("已提交卖家申请，审核通过后即可发布", "success");
+        router.replace("/profile");
+      } else {
+        showToast("恭喜！您已成功开通发布权限", "success");
+        router.replace("/publish");
+      }
     } catch (error: unknown) {
       console.error("Submit error:", error);
       showToast(
@@ -133,7 +147,7 @@ export default function SellerOnboardingPage() {
       <div className="flex flex-col min-h-screen bg-[#f3fbf7]">
         {/* Header */}
         <header className="sticky top-0 z-40 bg-[#f3fbf7]/80 backdrop-blur-md px-4 py-3 flex items-center justify-center">
-          <div className="max-w-[500px] md:max-w-2xl w-full flex items-center justify-between">
+          <div className="max-w-125 md:max-w-2xl w-full flex items-center justify-between">
             <button
               onClick={() => router.back()}
               className="w-10 h-10 rounded-full flex items-center justify-center bg-white hover:bg-gray-50 shadow-sm border border-gray-100 transition-colors"

@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { ItemDocument, recordHistory } from "@/lib/firebase/firestore";
+import { isListingPubliclyVisible } from "@/lib/moderation/config";
 import { incrementListingViewsOnce } from "@/lib/listingViews";
 import { useSellerProfile, formatSellerRating } from "@/hooks/useSellerProfile";
 import LocationPicker from "@/components/ui/LocationPicker";
@@ -313,6 +314,21 @@ export default function ListingDetailPage() {
   }
 
   if (!item) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <p className="text-[#5a6b73] mb-4">商品不存在或已被删除</p>
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
+        >
+          返回
+        </button>
+      </div>
+    );
+  }
+
+  const isOwner = user?.uid === item.sellerId;
+  if (!isOwner && !isListingPubliclyVisible(item)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <p className="text-[#5a6b73] mb-4">商品不存在或已被删除</p>

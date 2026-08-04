@@ -13,6 +13,10 @@ import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
 import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import {
+  PRE_APPROVAL_ENABLED,
+  initialModerationStatus,
+} from "@/lib/moderation/config";
 
 function isPriceFilled(price: number | "" | undefined): boolean {
   return (
@@ -137,6 +141,7 @@ export default function ItemPublishPage() {
         images: uploadedImageUrls,
         sellerId: user.uid,
         status: "在售",
+        moderationStatus: initialModerationStatus(),
         views: 0,
         favorites: 0,
         inquiries: 0,
@@ -144,6 +149,9 @@ export default function ItemPublishPage() {
 
       clearItemData();
       setShowSuccess(true);
+      if (PRE_APPROVAL_ENABLED) {
+        showToast("已提交，审核通过后将公开展示", "success");
+      }
     } catch (error) {
       console.error("Publish failed:", error);
       showToast("发布失败，请重试", "error");

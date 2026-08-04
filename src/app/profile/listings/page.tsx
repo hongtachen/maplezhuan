@@ -574,6 +574,21 @@ function MyListingsPageContent() {
                             {reviewLabel}
                           </span>
                         )}
+                        {item.isHidden && (
+                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border bg-rose-50 text-rose-600 border-rose-200">
+                            已隐藏
+                          </span>
+                        )}
+                        {item.moderationStatus === "pending" && (
+                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
+                            审核中
+                          </span>
+                        )}
+                        {item.moderationStatus === "rejected" && (
+                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border bg-rose-50 text-rose-600 border-rose-200">
+                            未通过
+                          </span>
+                        )}
                         <span
                           className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${st.bg} ${st.text}`}
                         >

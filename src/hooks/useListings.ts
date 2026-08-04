@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 import {
   getItems,
   getSublets,
   ItemDocument,
   SubletDocument,
 } from "@/lib/firebase/firestore";
+import { isListingPubliclyVisible } from "@/lib/moderation/config";
 
 export type Item = ItemDocument;
 export type Sublet = SubletDocument;
 
-function useListings<T extends { status: string }>(
-  fetchFn: () => Promise<T[]>,
-  activeStatus?: string,
-) {
+function useListings<
+  T extends { status: string; isHidden?: boolean; moderationStatus?: string },
+>(fetchFn: () => Promise<T[]>, activeStatus?: string) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,13 +21,16 @@ function useListings<T extends { status: string }>(
       try {
         setLoading(true);
         const results = await fetchFn();
+        const visible = results.filter((item) =>
+          isListingPubliclyVisible(item),
+        );
         setData(
           activeStatus
-            ? results.filter(
+            ? visible.filter(
                 (item) =>
                   item.status === activeStatus || item.status === "已预留",
               )
-            : results,
+            : visible,
         );
       } catch (error) {
         console.error("Failed to fetch listings:", error);
@@ -39,7 +42,11 @@ function useListings<T extends { status: string }>(
     fetchData();
   }, [fetchFn, activeStatus]);
 
-  return { data, setData, loading };
+  return {
+    data,
+    setData: setData as Dispatch<SetStateAction<T[]>>,
+    loading,
+  };
 }
 
 export function useItems(statusFilter: string | undefined = "在售") {

@@ -86,6 +86,8 @@ async function fetchMyListingsRaw(userId: string): Promise<MyListing[]> {
     buyerName: i.buyerName,
     buyerAvatar: i.buyerAvatar,
     buyerId: i.buyerId,
+    isHidden: !!i.isHidden,
+    moderationStatus: i.moderationStatus,
     _sortTime:
       i.createdAt && "seconds" in i.createdAt ? i.createdAt.seconds : 0,
   }));
@@ -113,6 +115,8 @@ async function fetchMyListingsRaw(userId: string): Promise<MyListing[]> {
       buyerName: s.buyerName,
       buyerAvatar: s.buyerAvatar,
       buyerId: s.buyerId,
+      isHidden: !!s.isHidden,
+      moderationStatus: s.moderationStatus,
       _sortTime:
         s.createdAt && "seconds" in s.createdAt ? s.createdAt.seconds : 0,
     }),
