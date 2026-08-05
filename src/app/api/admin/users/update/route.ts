@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
@@ -16,6 +17,29 @@ type UpdateBody = {
   isSuspended?: boolean;
   sellerStatus?: "none" | "pending" | "approved" | "rejected";
 };
+
+async function hideSellerListings(sellerId: string, actorUid: string) {
+  const db = getAdminFirestore();
+  const [items, sublets] = await Promise.all([
+    db.collection("items").where("sellerId", "==", sellerId).get(),
+    db.collection("sublets").where("sellerId", "==", sellerId).get(),
+  ]);
+
+  const batch = db.batch();
+  let n = 0;
+  for (const doc of [...items.docs, ...sublets.docs]) {
+    if (doc.data().isHidden === true) continue;
+    batch.update(doc.ref, {
+      isHidden: true,
+      hiddenReason: "账号封禁",
+      hiddenAt: FieldValue.serverTimestamp(),
+      hiddenBy: actorUid,
+    });
+    n += 1;
+    if (n >= 400) break;
+  }
+  if (n > 0) await batch.commit();
+}
 
 export async function POST(request: Request) {
   const auth = await requireAdmin(request);
@@ -92,6 +116,11 @@ export async function POST(request: Request) {
   }
 
   await ref.update(updates);
+
+  if (body.isSuspended === true && before.isSuspended !== true) {
+    await hideSellerListings(uid, auth.uid);
+  }
+
   await writeAdminAudit({
     actorUid: auth.uid,
     action: "users.update",

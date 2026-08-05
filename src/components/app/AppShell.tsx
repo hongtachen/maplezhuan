@@ -9,9 +9,27 @@ import AppSidebar from "./AppSidebar";
 import RouteTransition from "@/components/motion/RouteTransition";
 import CallProvider from "@/components/call/CallProvider";
 import FirebaseAnalytics from "@/components/analytics/FirebaseAnalytics";
+import SuspendedScreen from "@/components/auth/SuspendedScreen";
+import { useAuthStore } from "@/store/useAuthStore";
+
+function SuspendedGate({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const { userProfile, logout, isLoading } = useAuthStore();
+  const bypass =
+    pathname.startsWith("/legal") ||
+    pathname.startsWith("/admin") ||
+    pathname === "/about";
+
+  if (isLoading || bypass || !userProfile?.isSuspended) {
+    return <>{children}</>;
+  }
+
+  return <SuspendedScreen onLogout={() => void logout()} />;
+}
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const suspended = useAuthStore((s) => s.userProfile?.isSuspended === true);
 
   const isChatRoom =
     pathname.startsWith("/messages/") && pathname !== "/messages";
@@ -32,8 +50,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
     isSellerOnboarding ||
     isPublishInner ||
     isLegal ||
-    isAdmin;
-  const hideAppChrome = isAbout || isLegal || isAdmin;
+    isAdmin ||
+    suspended;
+  const hideAppChrome = isAbout || isLegal || isAdmin || suspended;
 
   return (
     <AppProvider>
@@ -47,7 +66,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <main
             className={`overflow-x-clip ${hideBottomNav ? "" : "pb-20 md:pb-0"}`}
           >
-            <RouteTransition>{children}</RouteTransition>
+            <SuspendedGate>
+              <RouteTransition>{children}</RouteTransition>
+            </SuspendedGate>
           </main>
         </div>
 

@@ -4,6 +4,7 @@ import {
   getAdminFirestore,
   isAdminConfigured,
 } from "@/lib/firebase/admin";
+import { forbidIfSuspended } from "@/lib/admin/forbidIfSuspended";
 
 export const runtime = "nodejs";
 
@@ -76,6 +77,9 @@ export async function POST(request: Request) {
       { status: 401 },
     );
   }
+
+  const suspended = await forbidIfSuspended(uid);
+  if (suspended) return suspended;
 
   let body: { to?: string; subject?: string; html?: string };
   try {
