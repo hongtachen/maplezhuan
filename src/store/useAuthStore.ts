@@ -15,6 +15,7 @@ import {
   UserProfile,
   createUserProfile,
   getUserProfile,
+  updateUserProfile,
 } from "@/lib/firebase/users";
 
 interface AuthStore {
@@ -97,17 +98,19 @@ export const useAuthStore = create<AuthStore>((set) => ({
       );
       const user = userCredential.user;
 
-      // Update Firebase Auth Profile (optional but good practice)
+      // Set Auth displayName before Firestore so onAuthStateChanged
+      // auto-create (if it races) prefers this over the email local-part.
       await updateProfile(user, { displayName: nickname });
 
-      // Create Database Profile
       await createUserProfile(user.uid, {
         email,
         nickname,
       });
 
-      // Fix race condition: manually fetch and set profile
-      // because onAuthStateChanged might fire before createUserProfile finishes
+      // createUserProfile is idempotent: if onAuthStateChanged already wrote
+      // a doc with email-derived nickname, overwrite with the chosen one.
+      await updateUserProfile(user.uid, { nickname });
+
       const profile = await getUserProfile(user.uid);
       set({ userProfile: profile });
     } catch (error: unknown) {
