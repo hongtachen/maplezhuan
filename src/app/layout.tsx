@@ -16,9 +16,12 @@ const notoSansSC = Noto_Sans_SC({
 });
 
 export const metadata: Metadata = {
-  title: "枫转 MapleZhuan — 加拿大华人本地闲置和转租市场",
+  title: "枫转 MapleZhuan — 加拿大本地闲置和转租市场",
   description:
-    "不用加好友，不用刷群翻帖。闲置一眼看清，价格、状态、位置直接展示。安省华人本地二手交易和转租平台，优先覆盖滑铁卢、多伦多。",
+    "不用加好友，不用刷群翻帖。闲置一眼看清，价格、状态、位置直接展示。华人二手交易和转租平台。",
+  icons: {
+    icon: "/logo/logo.svg",
+  },
 };
 
 import AppShell from "@/components/app/AppShell";
