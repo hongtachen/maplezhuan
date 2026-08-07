@@ -36,6 +36,8 @@ import { buildNewItemRequestEmail, sendEmail } from "@/lib/email";
 import { DEFAULT_REQUEST_MESSAGES } from "@/lib/transactionRequest";
 import type { TransactionRequestType } from "@/lib/transactionRequest";
 import { getCategoryLabel } from "@/lib/browseFilters";
+import ListingShareSheet from "@/components/ui/ListingShareSheet";
+import { listingShareUrl } from "@/lib/share/listingShare";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
 
@@ -70,6 +72,7 @@ export default function ListingDetailPage() {
     useState<TransactionRequestType | null>(null);
   const [requestModalKey, setRequestModalKey] = useState(0);
   const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const { profile: seller } = useSellerProfile(item?.sellerId);
   const sellerRating = formatSellerRating(seller);
 
@@ -368,7 +371,12 @@ export default function ListingDetailPage() {
             </svg>
           </button>
           <div className="flex gap-2">
-            <button className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
+            <button
+              type="button"
+              aria-label="分享"
+              onClick={() => setShareOpen(true)}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
               <svg
                 className="w-5 h-5 text-[#1f2933]"
                 viewBox="0 0 24 24"
@@ -755,6 +763,14 @@ export default function ListingDetailPage() {
         requestType={requestModalAction ?? "request_reserve"}
         listingType="item"
         loading={requestSubmitting}
+      />
+
+      <ListingShareSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title={item.title}
+        price={item.price}
+        url={listingShareUrl("item", id)}
       />
     </div>
   );
