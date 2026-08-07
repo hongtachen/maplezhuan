@@ -326,7 +326,7 @@ export default function ListingDetailPage() {
           onClick={() => goBackOr(router)}
           className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
         >
-          {hasDetailFromApp() ? "返回" : "继续浏览所有"}
+          {hasDetailFromApp() ? "返回" : "浏览所有"}
         </button>
       </div>
     );
@@ -341,7 +341,7 @@ export default function ListingDetailPage() {
           onClick={() => goBackOr(router)}
           className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
         >
-          {hasDetailFromApp() ? "返回" : "继续浏览所有"}
+          {hasDetailFromApp() ? "返回" : "浏览所有"}
         </button>
       </div>
     );
@@ -354,7 +354,7 @@ export default function ListingDetailPage() {
         <div
           className={`${DETAIL_PAGE_INSET} py-3 md:py-4 flex items-center justify-between`}
         >
-          <DetailBackControl kind="item" />
+          <DetailBackControl />
           <div className="flex gap-2">
             <button
               type="button"

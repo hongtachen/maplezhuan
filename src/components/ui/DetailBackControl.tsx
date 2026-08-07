@@ -4,11 +4,7 @@ import { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { goBackOr, hasDetailFromApp } from "@/lib/navigation";
 
-type Props = {
-  kind: "item" | "sublet";
-};
-
-export default function DetailBackControl({ kind }: Props) {
+export default function DetailBackControl() {
   const router = useRouter();
   const fromApp = useSyncExternalStore(
     () => () => {},
@@ -47,7 +43,7 @@ export default function DetailBackControl({ kind }: Props) {
       onClick={() => goBackOr(router)}
       className="h-10 px-3.5 rounded-full flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors text-[13px] font-bold text-[#2f9e6d]"
     >
-      {"浏览所有"}
+      浏览所有
     </button>
   );
 }
