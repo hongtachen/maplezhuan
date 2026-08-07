@@ -17,48 +17,15 @@ export type UploadVideoResult = {
 
 export type UploadVideoProgress = (percent: number) => void;
 
-/** Bake EXIF orientation into pixels so crawlers / iMessage don't show sideways photos. */
-async function normalizeImageOrientation(file: File): Promise<File> {
-  if (
-    typeof document === "undefined" ||
-    typeof createImageBitmap !== "function"
-  ) {
-    return file;
-  }
-  try {
-    const bitmap = await createImageBitmap(file, {
-      imageOrientation: "from-image",
-    });
-    const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      bitmap.close();
-      return file;
-    }
-    ctx.drawImage(bitmap, 0, 0);
-    bitmap.close();
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", 0.92),
-    );
-    if (!blob) return file;
-    const base = file.name.replace(/\.[^.]+$/, "") || "image";
-    return new File([blob], `${base}.jpg`, { type: "image/jpeg" });
-  } catch {
-    return file;
-  }
-}
-
 export async function uploadImage(
   file: File,
   path: string = "images",
 ): Promise<string> {
-  const normalized = await normalizeImageOrientation(file);
-  const fileName = `${uuidv4()}.jpg`;
+  const fileExtension = file.name.split(".").pop();
+  const fileName = `${uuidv4()}.${fileExtension}`;
   const storageRef = ref(storage, `${path}/${fileName}`);
 
-  await uploadBytes(storageRef, normalized, { contentType: "image/jpeg" });
+  await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
 }
 
