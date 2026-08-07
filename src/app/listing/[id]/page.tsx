@@ -37,8 +37,9 @@ import { DEFAULT_REQUEST_MESSAGES } from "@/lib/transactionRequest";
 import type { TransactionRequestType } from "@/lib/transactionRequest";
 import { getCategoryLabel } from "@/lib/browseFilters";
 import ListingShareSheet from "@/components/ui/ListingShareSheet";
+import DetailBackControl from "@/components/ui/DetailBackControl";
 import { listingShareUrl } from "@/lib/share/listingShare";
-import { goBackOr } from "@/lib/navigation";
+import { goBackOr, hasDetailFromApp } from "@/lib/navigation";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
 
@@ -325,7 +326,7 @@ export default function ListingDetailPage() {
           onClick={() => goBackOr(router)}
           className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
         >
-          返回
+          {hasDetailFromApp() ? "返回" : "继续浏览所有"}
         </button>
       </div>
     );
@@ -340,7 +341,7 @@ export default function ListingDetailPage() {
           onClick={() => goBackOr(router)}
           className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
         >
-          返回
+          {hasDetailFromApp() ? "返回" : "继续浏览所有"}
         </button>
       </div>
     );
@@ -353,24 +354,7 @@ export default function ListingDetailPage() {
         <div
           className={`${DETAIL_PAGE_INSET} py-3 md:py-4 flex items-center justify-between`}
         >
-          <button
-            onClick={() => goBackOr(router)}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors"
-          >
-            <svg
-              className="w-5 h-5 text-[#1f2933]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+          <DetailBackControl kind="item" />
           <div className="flex gap-2">
             <button
               type="button"

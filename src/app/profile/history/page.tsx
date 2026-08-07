@@ -9,6 +9,7 @@ import { PageLoading } from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
 import ProductThumbnail from "@/components/ui/ProductThumbnail";
 import { btnPrimary } from "@/lib/feedback/styles";
+import { markDetailFromApp } from "@/lib/navigation";
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -127,7 +128,10 @@ export default function HistoryPage() {
                         >
                           <button
                             type="button"
-                            onClick={() => router.push(detailHref)}
+                            onClick={() => {
+                              markDetailFromApp();
+                              router.push(detailHref);
+                            }}
                             className="w-full flex items-center gap-3 p-3 text-left hover:bg-[#f3fbf7]/60 transition-colors"
                           >
                             {item.image ? (
@@ -154,7 +158,10 @@ export default function HistoryPage() {
                           <div className="border-t border-[rgba(31,41,51,0.04)] px-3 py-2.5 flex items-center justify-between gap-2 bg-gray-50/40">
                             <button
                               type="button"
-                              onClick={() => router.push(detailHref)}
+                              onClick={() => {
+                                markDetailFromApp();
+                                router.push(detailHref);
+                              }}
                               className="flex-1 flex items-center justify-center gap-1.5 text-[13px] font-bold text-[#2f9e6d] bg-white border border-[#2f9e6d]/20 py-2 rounded-[12px] hover:bg-[#f3fbf7] transition-all"
                             >
                               <svg

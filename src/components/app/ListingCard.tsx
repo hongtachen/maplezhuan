@@ -11,6 +11,7 @@ import {
   handleViewTransitionClick,
   listingHeroStyle,
 } from "@/lib/motion/viewTransition";
+import { markDetailFromApp } from "@/lib/navigation";
 import FavoriteHeartIcon, {
   useFavoriteBounce,
 } from "@/components/motion/FavoriteHeartIcon";
@@ -73,7 +74,10 @@ export default function ListingCard({ listing }: ListingCardProps) {
   return (
     <Link
       href={href}
-      onClick={(e) => handleViewTransitionClick(e, router, href)}
+      onClick={(e) => {
+        markDetailFromApp();
+        handleViewTransitionClick(e, router, href);
+      }}
       className="flex flex-col cursor-pointer group"
     >
       <motion.article

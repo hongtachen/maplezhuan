@@ -8,6 +8,7 @@ import Image from "next/image";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useItems, useSublets } from "@/hooks/useListings";
+import { markDetailFromApp } from "@/lib/navigation";
 
 // Fix Leaflet default icon issue
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)
@@ -149,6 +150,7 @@ export default function GlobalMapComponent({
                 <Popup closeButton={false}>
                   <Link
                     href={`/listing/${item.id}`}
+                    onClick={() => markDetailFromApp()}
                     className="block w-[150px] no-underline hover:opacity-90 transition-opacity p-1"
                   >
                     {item.images?.[0] && (
@@ -195,6 +197,7 @@ export default function GlobalMapComponent({
                 <Popup closeButton={false}>
                   <Link
                     href={`/sublet/${sublet.id}`}
+                    onClick={() => markDetailFromApp()}
                     className="block w-[150px] no-underline hover:opacity-90 transition-opacity p-1"
                   >
                     {sublet.images?.[0] && (

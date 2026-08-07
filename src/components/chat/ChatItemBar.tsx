@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ItemDocument, SubletDocument } from "@/lib/firebase/firestore";
 import ProductThumbnail from "@/components/ui/ProductThumbnail";
+import { markDetailFromApp } from "@/lib/navigation";
 
 type Props = {
   itemId: string;
@@ -33,6 +34,7 @@ export default function ChatItemBar({
   return (
     <Link
       href={href}
+      onClick={() => markDetailFromApp()}
       className="bg-gray-50 px-4 py-2.5 border-t border-[rgba(31,41,51,0.04)] flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
     >
       <div className="flex items-center gap-3 min-w-0">

@@ -28,6 +28,7 @@ import {
   findChatByItemAndUsers,
   relistListing,
 } from "@/lib/firebase/transactions";
+import { markDetailFromApp } from "@/lib/navigation";
 import {
   LISTING_UI_STATUSES,
   ListingUiStatus,
@@ -423,6 +424,7 @@ function MyListingsPageContent() {
                             ? `/sublet/${item.id}`
                             : `/listing/${item.id}`
                         }
+                        onClick={() => markDetailFromApp()}
                         className="shrink-0"
                       >
                         {item.image ? (
@@ -448,6 +450,7 @@ function MyListingsPageContent() {
                             ? `/sublet/${item.id}`
                             : `/listing/${item.id}`
                         }
+                        onClick={() => markDetailFromApp()}
                         className="flex-1 min-w-0 hover:opacity-80 transition-opacity"
                       >
                         <div className="flex items-center gap-2 mb-0.5">
@@ -634,6 +637,7 @@ function MyListingsPageContent() {
                             ? `/sublet/${item.id}`
                             : `/listing/${item.id}`
                         }
+                        onClick={() => markDetailFromApp()}
                         className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-[#2f9e6d] bg-white border border-[#2f9e6d]/20 py-2.5 rounded-[12px] hover:bg-[#f3fbf7] transition-all"
                       >
                         查看详情
