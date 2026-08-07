@@ -11,12 +11,21 @@ export function formatSharePrice(price: number): string {
   return price === 0 ? "免费" : `$${price} CAD`;
 }
 
+/** Caption only (no URL) — safe to pass with `url` to navigator.share. */
+export function buildShareCaption(input: {
+  title: string;
+  price: number;
+}): string {
+  return `「${input.title}」${formatSharePrice(input.price)}`;
+}
+
+/** Caption + URL for 小红书 paste. */
 export function buildShareText(input: {
   title: string;
   price: number;
   url: string;
 }): string {
-  return `「${input.title}」${formatSharePrice(input.price)}\n${input.url}`;
+  return `${buildShareCaption(input)}\n${input.url}`;
 }
 
 export async function copyText(text: string): Promise<void> {
@@ -41,18 +50,14 @@ export function canNativeShare(): boolean {
   );
 }
 
+/** Caption without URL + url field — one OG card, price visible in Messages. */
 export async function nativeShare(input: {
-  title: string;
   text: string;
   url: string;
 }): Promise<"shared" | "cancelled" | "unsupported"> {
   if (!canNativeShare()) return "unsupported";
   try {
-    await navigator.share({
-      title: input.title,
-      text: input.text,
-      url: input.url,
-    });
+    await navigator.share({ text: input.text, url: input.url });
     return "shared";
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {

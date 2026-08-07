@@ -5,6 +5,7 @@ import { Link2, Share2 } from "lucide-react";
 import BottomSheet from "@/components/motion/BottomSheet";
 import { useApp } from "@/components/app/AppContext";
 import {
+  buildShareCaption,
   buildShareText,
   canNativeShare,
   copyText,
@@ -27,14 +28,17 @@ function useClientFlag() {
   );
 }
 
-type ActionRowProps = {
+function ActionRow({
+  label,
+  sublabel,
+  icon,
+  onClick,
+}: {
   label: string;
   sublabel: string;
   icon: ReactNode;
   onClick: () => void;
-};
-
-function ActionRow({ label, sublabel, icon, onClick }: ActionRowProps) {
+}) {
   return (
     <button
       type="button"
@@ -56,6 +60,10 @@ function ActionRow({ label, sublabel, icon, onClick }: ActionRowProps) {
   );
 }
 
+function BrandIcon({ src }: { src: string }) {
+  return <img src={src} alt="" width={20} height={20} className="w-5 h-5" />;
+}
+
 export default function ListingShareSheet({
   open,
   onClose,
@@ -66,49 +74,28 @@ export default function ListingShareSheet({
   const { showToast } = useApp();
   const mounted = useClientFlag();
   const showSystemShare = mounted && canNativeShare();
-  const shareText = buildShareText({ title, price, url });
+  const caption = buildShareCaption({ title, price });
+  const xhsText = buildShareText({ title, price, url });
 
-  const handleCopyLink = async () => {
+  const copy = async (text: string, ok: string, fail: string) => {
     try {
-      await copyText(url);
-      showToast("链接已复制", "success");
+      await copyText(text);
+      showToast(ok, "success");
       onClose();
     } catch {
-      showToast("复制失败，请手动复制链接", "error");
+      showToast(fail, "error");
     }
   };
 
   const handleSystemShare = async () => {
     try {
-      const result = await nativeShare({ title, text: shareText, url });
+      const result = await nativeShare({ text: caption, url });
       if (result === "shared") onClose();
       if (result === "unsupported") {
-        await copyText(url);
-        showToast("链接已复制", "success");
-        onClose();
+        await copy(url, "链接已复制", "复制失败，请手动复制链接");
       }
     } catch {
       showToast("分享失败", "error");
-    }
-  };
-
-  const handleWechat = async () => {
-    try {
-      await copyText(url);
-      showToast("链接已复制，打开微信粘贴发送", "success");
-      onClose();
-    } catch {
-      showToast("复制失败，请手动复制链接", "error");
-    }
-  };
-
-  const handleXhs = async () => {
-    try {
-      await copyText(shareText);
-      showToast("文案已复制，打开小红书粘贴", "success");
-      onClose();
-    } catch {
-      showToast("复制失败，请手动复制文案", "error");
     }
   };
 
@@ -127,48 +114,46 @@ export default function ListingShareSheet({
       </h2>
       <p className="text-[13px] text-[#5a6b73] mb-3 line-clamp-1">{title}</p>
       <div className="divide-y divide-[rgba(31,41,51,0.06)]">
-        <ActionRow
-          label="复制链接"
-          sublabel="复制后可粘贴到任意地方"
-          icon={<Link2 className="w-5 h-5" strokeWidth={2} />}
-          onClick={handleCopyLink}
-        />
         {showSystemShare && (
           <ActionRow
             label="系统分享"
-            sublabel="使用手机自带分享菜单"
+            sublabel="微信、信息等"
             icon={<Share2 className="w-5 h-5" strokeWidth={2} />}
             onClick={handleSystemShare}
           />
         )}
         <ActionRow
-          label="微信"
-          sublabel="复制链接，到微信粘贴发送"
-          icon={
-            <img
-              src="/wechat.svg"
-              alt=""
-              width={20}
-              height={20}
-              className="w-5 h-5"
-            />
+          label="小红书"
+          sublabel="复制文案后打开小红书粘贴"
+          icon={<BrandIcon src="/xiaohongshu.svg" />}
+          onClick={() =>
+            copy(
+              xhsText,
+              "文案已复制，打开小红书粘贴",
+              "复制失败，请手动复制文案",
+            )
           }
-          onClick={handleWechat}
         />
         <ActionRow
-          label="小红书"
-          sublabel="复制标题和链接，到小红书粘贴"
-          icon={
-            <img
-              src="/xiaohongshu.svg"
-              alt=""
-              width={20}
-              height={20}
-              className="w-5 h-5"
-            />
-          }
-          onClick={handleXhs}
+          label="复制链接"
+          sublabel="复制后可粘贴到任意地方"
+          icon={<Link2 className="w-5 h-5" strokeWidth={2} />}
+          onClick={() => copy(url, "链接已复制", "复制失败，请手动复制链接")}
         />
+        {!showSystemShare && (
+          <ActionRow
+            label="微信"
+            sublabel="复制链接，到微信粘贴发送"
+            icon={<BrandIcon src="/wechat.svg" />}
+            onClick={() =>
+              copy(
+                url,
+                "链接已复制，打开微信粘贴发送",
+                "复制失败，请手动复制链接",
+              )
+            }
+          />
+        )}
       </div>
     </BottomSheet>
   );
