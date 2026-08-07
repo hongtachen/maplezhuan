@@ -37,6 +37,7 @@ import { DEFAULT_REQUEST_MESSAGES } from "@/lib/transactionRequest";
 import { formatMoveInDate } from "@/lib/browseFilters";
 import ListingShareSheet from "@/components/ui/ListingShareSheet";
 import { listingShareUrl } from "@/lib/share/listingShare";
+import { goBackOr } from "@/lib/navigation";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
 
@@ -302,7 +303,7 @@ export default function SubletDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <p className="text-[#5a6b73] mb-4">转租信息不存在或已被删除</p>
         <button
-          onClick={() => router.back()}
+          onClick={() => goBackOr(router)}
           className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
         >
           返回
@@ -317,7 +318,7 @@ export default function SubletDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <p className="text-[#5a6b73] mb-4">转租信息不存在或已被删除</p>
         <button
-          onClick={() => router.back()}
+          onClick={() => goBackOr(router)}
           className="px-4 py-2 bg-[#2f9e6d] text-white rounded-xl"
         >
           返回
@@ -338,7 +339,7 @@ export default function SubletDetailPage() {
           className={`${DETAIL_PAGE_INSET} py-3 md:py-4 flex items-center justify-between`}
         >
           <button
-            onClick={() => router.back()}
+            onClick={() => goBackOr(router)}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors"
           >
             <svg
