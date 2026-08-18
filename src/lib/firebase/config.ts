@@ -21,16 +21,35 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 let analyticsReady = false;
+let analyticsInstance: import("firebase/analytics").Analytics | null = null;
 
-/** Client-only. No-ops when Measurement ID is blank or Analytics is unsupported. */
+function isLocalHost(): boolean {
+  if (typeof window === "undefined") return true;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1";
+}
+
+/** client-only */
 export async function initAnalytics(): Promise<void> {
   if (typeof window === "undefined") return;
+  if (isLocalHost()) return;
   if (!firebaseConfig.measurementId) return;
   if (analyticsReady) return;
 
   const { getAnalytics, isSupported } = await import("firebase/analytics");
   if (!(await isSupported())) return;
 
-  getAnalytics(app);
+  analyticsInstance = getAnalytics(app);
   analyticsReady = true;
+}
+
+/** pause/resume collection (e.g. skip /admin). not running if Analytics was never started. */
+export async function setAnalyticsCollection(enabled: boolean): Promise<void> {
+  if (!analyticsReady || isLocalHost()) return;
+  const { setAnalyticsCollectionEnabled, getAnalytics } =
+    await import("firebase/analytics");
+  setAnalyticsCollectionEnabled(
+    analyticsInstance ?? getAnalytics(app),
+    enabled,
+  );
 }

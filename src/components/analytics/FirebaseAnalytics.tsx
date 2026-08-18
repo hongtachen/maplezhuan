@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect } from "react";
-import { initAnalytics } from "@/lib/firebase/config";
+import { usePathname } from "next/navigation";
+import { initAnalytics, setAnalyticsCollection } from "@/lib/firebase/config";
 
-/** Initializes GA4 Analytics once on the client. */
+/** GA4: skip localhost; pause collection on /admin. */
 export default function FirebaseAnalytics() {
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith("/admin");
+
   useEffect(() => {
-    void initAnalytics();
-  }, []);
+    if (isAdmin) {
+      void setAnalyticsCollection(false);
+      return;
+    }
+    void initAnalytics().then(() => setAnalyticsCollection(true));
+  }, [isAdmin]);
 
   return null;
 }
