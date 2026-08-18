@@ -13,6 +13,7 @@ import LocationPicker, { LocationData } from "@/components/ui/LocationPicker";
 import PublishSuccessOverlay from "@/components/motion/PublishSuccessOverlay";
 import UploadProgressOverlay from "@/components/ui/UploadProgressOverlay";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { requireTrustedEmail } from "@/lib/auth/emailVerification";
 import {
   PRE_APPROVAL_ENABLED,
   initialModerationStatus,
@@ -106,6 +107,7 @@ export default function ItemPublishPage() {
 
   const publishItem = async (finalLocationData: LocationData) => {
     if (!user) return;
+    if (!requireTrustedEmail(user)) return;
 
     try {
       setIsSubmitting(true);

@@ -41,9 +41,11 @@ export async function POST(request: Request) {
   }
 
   let uid: string;
+  let emailVerified = false;
   try {
     const decoded = await getAdminAuth().verifyIdToken(idToken);
     uid = decoded.uid;
+    emailVerified = decoded.email_verified === true;
   } catch (e) {
     if (process.env.NODE_ENV === "development") {
       console.error("[calls/token] verifyIdToken failed:", e);
@@ -51,6 +53,16 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "登录已过期，请重新登录" },
       { status: 401 },
+    );
+  }
+
+  if (
+    process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION !== "false" &&
+    !emailVerified
+  ) {
+    return NextResponse.json(
+      { error: "请先验证邮箱后再发起通话" },
+      { status: 403 },
     );
   }
 

@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
 } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
@@ -17,6 +18,8 @@ import {
   getUserProfile,
   updateUserProfile,
 } from "@/lib/firebase/users";
+import { assertEmailAllowed } from "@/lib/auth/disposableEmailDomains";
+import { getEmailVerificationContinueUrl } from "@/lib/auth/emailVerification";
 
 interface AuthStore {
   user: User | null;
@@ -26,6 +29,8 @@ interface AuthStore {
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (e: string, p: string) => Promise<void>;
   registerWithEmail: (e: string, p: string, nickname: string) => Promise<void>;
+  resendEmailVerification: () => Promise<void>;
+  reloadUser: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
 }
@@ -91,6 +96,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
   registerWithEmail: async (email, password, nickname) => {
     try {
+      assertEmailAllowed(email);
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -111,11 +118,44 @@ export const useAuthStore = create<AuthStore>((set) => ({
       // a doc with email-derived nickname, overwrite with the chosen one.
       await updateUserProfile(user.uid, { nickname });
 
+      try {
+        await sendEmailVerification(user, {
+          url: getEmailVerificationContinueUrl(),
+          handleCodeInApp: false,
+        });
+      } catch (verifyError) {
+        console.error("sendEmailVerification failed:", verifyError);
+      }
+
       const profile = await getUserProfile(user.uid);
       set({ userProfile: profile });
     } catch (error: unknown) {
       console.error("Email Register failed:", error);
       throw error;
+    }
+  },
+  resendEmailVerification: async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      throw Object.assign(new Error("Not signed in"), {
+        code: "auth/unauthenticated",
+      });
+    }
+    if (user.emailVerified) return;
+    await sendEmailVerification(user, {
+      url: getEmailVerificationContinueUrl(),
+      handleCodeInApp: false,
+    });
+  },
+  reloadUser: async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    await user.reload();
+    // Force a fresh ID token so Firestore rules see email_verified promptly.
+    await auth.currentUser?.getIdToken(true);
+    const refreshed = auth.currentUser;
+    if (refreshed) {
+      useAuthStore.setState({ user: refreshed });
     }
   },
   logout: async () => {

@@ -17,6 +17,7 @@ import {
   PRE_APPROVAL_ENABLED,
   initialModerationStatus,
 } from "@/lib/moderation/config";
+import { requireTrustedEmail } from "@/lib/auth/emailVerification";
 
 export default function SubletStep4Page() {
   const router = useRouter();
@@ -76,6 +77,7 @@ export default function SubletStep4Page() {
       showToast("请先登录", "error");
       return;
     }
+    if (!requireTrustedEmail(user)) return;
 
     try {
       setIsSubmitting(true);

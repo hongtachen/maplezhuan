@@ -23,6 +23,7 @@ import {
 } from "react";
 import Toast, { ToastType } from "@/components/ui/Toast";
 import GuestFavoriteNudge from "@/components/app/GuestFavoriteNudge";
+import VerifyEmailPanel from "@/components/auth/VerifyEmailPanel";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   getUserFavorites,
@@ -185,6 +186,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       {showNudge && (
         <GuestFavoriteNudge onDismiss={() => setShowNudge(false)} />
       )}
+
+      <VerifyEmailPanel />
     </AppContext.Provider>
   );
 }

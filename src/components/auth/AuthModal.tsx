@@ -5,6 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
+import {
+  getEmailRejectMessage,
+  getEmailRejectReason,
+} from "@/lib/auth/disposableEmailDomains";
 
 function getAuthSubtitle(pathname: string): string {
   if (pathname.startsWith("/messages")) {
@@ -50,8 +54,14 @@ export default function AuthModal() {
           setIsSubmitting(false);
           return;
         }
+        const rejectReason = getEmailRejectReason(email);
+        if (rejectReason) {
+          showToast(getEmailRejectMessage(rejectReason), "error");
+          setIsSubmitting(false);
+          return;
+        }
         await registerWithEmail(email, password, nickname.trim());
-        showToast("注册成功", "success");
+        showToast("注册成功，请查收验证邮件后再发布或聊天", "success");
       }
     } catch (error: unknown) {
       const code = (error as { code?: string }).code;
@@ -65,6 +75,11 @@ export default function AuthModal() {
         msg = "该邮箱已被注册，请直接登录";
       else if (code === "auth/weak-password")
         msg = "密码太弱，请至少使用6位字符";
+      else if (
+        code === "auth/disposable-email" ||
+        code === "auth/plus-alias-email"
+      )
+        msg = (error as Error).message || getEmailRejectMessage("disposable");
 
       showToast(msg, "error");
     } finally {

@@ -38,6 +38,7 @@ import { formatMoveInDate } from "@/lib/browseFilters";
 import ListingShareSheet from "@/components/ui/ListingShareSheet";
 import DetailBackControl from "@/components/ui/DetailBackControl";
 import { listingShareUrl } from "@/lib/share/listingShare";
+import { requireTrustedEmail } from "@/lib/auth/emailVerification";
 import { goBackOr, hasDetailFromApp } from "@/lib/navigation";
 
 const DETAIL_PAGE_INSET = "w-full max-w-4xl mx-auto px-4 md:px-8";
@@ -127,6 +128,7 @@ export default function SubletDetailPage() {
       router.push("/profile");
       return;
     }
+    if (!requireTrustedEmail(user)) return;
     if (user.uid === sublet?.sellerId) return;
 
     if (action === "request_reserve" && messageText === undefined) {
@@ -247,6 +249,7 @@ export default function SubletDetailPage() {
 
   const handleBargainSubmit = async (offerPrice: number, message: string) => {
     if (!user || !sublet) return;
+    if (!requireTrustedEmail(user)) return;
     const title =
       sublet.title ||
       `${sublet.roomTypes?.[0] || "房间"} in ${sublet.propertyType}`;
@@ -707,6 +710,7 @@ export default function SubletDetailPage() {
                         router.push("/profile");
                         return;
                       }
+                      if (!requireTrustedEmail(user)) return;
                       if (sublet.price === 0) {
                         handleAction("contact");
                         return;
