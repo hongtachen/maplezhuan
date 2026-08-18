@@ -25,6 +25,7 @@ import {
   SubletDocument,
 } from "@/lib/firebase/firestore";
 import { getUserProfile, UserProfile } from "@/lib/firebase/users";
+import { requireTrustedEmail } from "@/lib/auth/emailVerification";
 import {
   acceptReserve,
   acceptBargain,
@@ -251,6 +252,7 @@ export default function ChatPage() {
 
   const handleSend = async () => {
     if (!inputText.trim() || !user || !chat) return;
+    if (!requireTrustedEmail(user)) return;
     const textToSend = inputText;
     setInputText("");
     const otherUserId =
@@ -423,6 +425,7 @@ export default function ChatPage() {
     message: string,
   ) => {
     if (!user || !chat || !itemType || !otherUser) return;
+    if (!requireTrustedEmail(user)) return;
     setCounterSubmitting(true);
     try {
       const otherUserId =
@@ -447,6 +450,7 @@ export default function ChatPage() {
 
   const handleSendImage = async (files: FileList) => {
     if (!user || !chat) return;
+    if (!requireTrustedEmail(user)) return;
     const otherUserId =
       chat.participants.find((p) => p !== user.uid) || chat.participants[0];
     const total = files.length;
@@ -485,6 +489,7 @@ export default function ChatPage() {
     note: string,
   ) => {
     if (!user || !chat) return;
+    if (!requireTrustedEmail(user)) return;
     if (!canSchedulePickup) {
       showToast("请先完成预留或交易确认，再约定取货时间", "info");
       return;
@@ -518,6 +523,7 @@ export default function ChatPage() {
 
   const handleShareContact = async () => {
     if (!user || !chat) return;
+    if (!requireTrustedEmail(user)) return;
     const profile = await getUserProfile(user.uid);
     if (!profile?.phone && !profile?.wechat) {
       showToast("请先在设置中填写联系方式", "info");
@@ -545,6 +551,7 @@ export default function ChatPage() {
 
   const handleStartVoiceCall = async () => {
     if (!user || !chat || !otherUser) return;
+    if (!requireTrustedEmail(user)) return;
     const otherUserId =
       chat.participants.find((p) => p !== user.uid) || chat.participants[0];
     try {
@@ -562,6 +569,7 @@ export default function ChatPage() {
 
   const handleStartVideoCall = async () => {
     if (!user || !chat || !otherUser || itemType !== "sublet") return;
+    if (!requireTrustedEmail(user)) return;
     const otherUserId =
       chat.participants.find((p) => p !== user.uid) || chat.participants[0];
     try {

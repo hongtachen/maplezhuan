@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "sync:disposable-emails": "node scripts/sync-disposable-emails.mjs"
   },
   "dependencies": {
     "firebase": "^12.14.0",

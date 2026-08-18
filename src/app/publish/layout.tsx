@@ -1,6 +1,7 @@
 "use client";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import EmailVerificationBanner from "@/components/auth/EmailVerificationBanner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -33,5 +34,10 @@ export default function PublishLayout({
     );
   }
 
-  return <ProtectedRoute>{children}</ProtectedRoute>;
+  return (
+    <ProtectedRoute>
+      <EmailVerificationBanner />
+      {children}
+    </ProtectedRoute>
+  );
 }

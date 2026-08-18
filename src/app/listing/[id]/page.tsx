@@ -38,6 +38,7 @@ import type { TransactionRequestType } from "@/lib/transactionRequest";
 import { getCategoryLabel } from "@/lib/browseFilters";
 import ListingShareSheet from "@/components/ui/ListingShareSheet";
 import DetailBackControl from "@/components/ui/DetailBackControl";
+import { requireTrustedEmail } from "@/lib/auth/emailVerification";
 import { listingShareUrl } from "@/lib/share/listingShare";
 import { goBackOr, hasDetailFromApp } from "@/lib/navigation";
 
@@ -133,6 +134,7 @@ export default function ListingDetailPage() {
       router.push("/profile");
       return;
     }
+    if (!requireTrustedEmail(user)) return;
     if (user.uid === item?.sellerId) return;
     setRequestModalAction(action);
     setRequestModalKey((k) => k + 1);
@@ -146,6 +148,7 @@ export default function ListingDetailPage() {
       router.push("/profile");
       return;
     }
+    if (!requireTrustedEmail(user)) return;
     if (user.uid === item?.sellerId) return;
 
     if (
@@ -269,6 +272,7 @@ export default function ListingDetailPage() {
 
   const handleBargainSubmit = async (offerPrice: number, message: string) => {
     if (!user || !item) return;
+    if (!requireTrustedEmail(user)) return;
     setBargainSubmitting(true);
     try {
       const chatId = await sendBargainOffer({
@@ -705,6 +709,7 @@ export default function ListingDetailPage() {
                         router.push("/profile");
                         return;
                       }
+                      if (!requireTrustedEmail(user)) return;
                       if (item.price === 0) {
                         handleAction("contact");
                         return;

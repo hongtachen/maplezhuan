@@ -1,0 +1,34 @@
+name: sync disposable email blocklist
+
+on:
+  schedule:
+    # 3:00 AM EST (UTC-5) on the 17th of every month. GitHub cron is UTC-only.
+    - cron: "0 8 17 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Download and write blocklist JSON
+        run: node scripts/sync-disposable-emails.mjs
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: update disposable email blocklist"
+          branch: chore/sync-disposable-emails
+          title: "chore: update disposable email blocklist"
+          body: |
+            Monthly refresh from disposable email blocklist.
+            Review the diff, then merge.
+          add-paths: src/lib/auth/data/disposable_email_blocklist.json

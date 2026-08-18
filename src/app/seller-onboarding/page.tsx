@@ -20,6 +20,7 @@ import {
   PRE_APPROVAL_ENABLED,
   initialSellerStatus,
 } from "@/lib/moderation/config";
+import { requireTrustedEmail } from "@/lib/auth/emailVerification";
 
 type FormErrors = {
   contact?: string;
@@ -82,6 +83,7 @@ export default function SellerOnboardingPage() {
       showToast("未检测到登录用户，请重新登录", "error");
       return;
     }
+    if (!requireTrustedEmail(user)) return;
     if (!userProfile) {
       showToast("用户资料尚未加载完成，请刷新页面重试", "error");
       return;

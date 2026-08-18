@@ -24,6 +24,7 @@ import { Room, RoomEvent } from "livekit-client";
 import { db } from "@/lib/firebase/config";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useApp } from "@/components/app/AppContext";
+import { requireTrustedEmail } from "@/lib/auth/emailVerification";
 import type {
   CallDocument,
   CallMode,
@@ -374,6 +375,7 @@ export default function CallProvider({ children }: { children: ReactNode }) {
   const startCall = useCallback(
     async (params: StartCallParams, callMode: CallMode) => {
       if (!user || busy) return;
+      if (!requireTrustedEmail(user)) return;
       if (phase !== "idle") {
         showToast("当前已有通话进行中", "info");
         return;
